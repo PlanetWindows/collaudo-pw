@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Schede Collaudo Digitali - Planet Windows</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
 <style>html,body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}.loading{padding:24px;color:#555}</style>
 </head>
 <body>
@@ -46,6 +47,8 @@
     if (!s.includes('Allega / cambia firma') || s.includes('Firma con dito, penna touch o mouse') || s.includes('initSignaturePads')) {
       throw new Error('Verifica finale modifica firma non superata');
     }
+
+    s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
 
     document.open();
     document.write(s);
