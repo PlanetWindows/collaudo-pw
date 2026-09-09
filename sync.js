@@ -12,8 +12,7 @@
   let loadSeq = 0;
   let saveTimer = null;
   let pollTimer = null;
-
-  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  let codePromptPaused = false;
 
   function setStatus(message, ms = 2200) {
     const el = document.getElementById('status');
@@ -36,18 +35,13 @@
     return `${type}::${commessa.trim().toUpperCase().replace(/\s+/g, ' ')}`;
   }
 
-  function hasMeaningfulData(payload) {
-    if (!payload) return false;
-    const f = payload.fields || {};
-    const hasField = Object.entries(f).some(([k, v]) => k !== 'commessa' && String(v || '').trim());
-    return hasField || Object.keys(payload.esiti || {}).length > 0 || Object.values(payload.signatures || {}).some(Boolean);
-  }
-
   function getAccessCode() {
     let code = localStorage.getItem(CODE_KEY) || '';
     if (code) return code;
+    if (codePromptPaused) return '';
     code = (prompt('Inserisci il codice reparto per condividere le schede Collaudo PW tra i PC:') || '').trim().toUpperCase();
     if (code) localStorage.setItem(CODE_KEY, code);
+    else codePromptPaused = true;
     return code;
   }
 
@@ -66,7 +60,8 @@
 
     if (res.status === 401 && json.error === 'invalid_code') {
       localStorage.removeItem(CODE_KEY);
-      alert('Codice reparto non corretto. Reinseriscilo al prossimo tentativo.');
+      codePromptPaused = true;
+      alert('Codice reparto non corretto. Reinseriscilo modificando di nuovo la commessa.');
       throw new Error('invalid_code');
     }
     if (!res.ok) throw new Error(json.error || `sync_${res.status}`);
@@ -136,11 +131,18 @@
 
       if (data.found) {
         const changed = data.updated_at && data.updated_at !== lastUpdatedAt;
-        lastPayload = data.payload || {};
-        lastUpdatedAt = data.updated_at || '';
+        const canApply = !localDirty && !savingRemote;
 
-        if ((firstForKey || forceApply || changed) && !localDirty && !savingRemote) {
-          applyRemotePayload(data.payload, firstForKey ? 'Scheda condivisa caricata' : 'Aggiornata da un altro PC');
+        if (firstForKey || forceApply || (changed && canApply)) {
+          lastPayload = data.payload || {};
+          lastUpdatedAt = data.updated_at || '';
+          if (canApply) {
+            applyRemotePayload(data.payload, firstForKey ? 'Scheda condivisa caricata' : 'Aggiornata da un altro PC');
+          }
+        } else if (!lastPayload && canApply) {
+          lastPayload = data.payload || {};
+          lastUpdatedAt = data.updated_at || '';
+          applyRemotePayload(data.payload, 'Scheda condivisa caricata');
         }
       } else if (firstForKey) {
         lastPayload = {};
@@ -206,6 +208,7 @@
     if (!input || input.dataset.syncBound === '1') return;
     input.dataset.syncBound = '1';
     input.addEventListener('input', () => {
+      codePromptPaused = false;
       localDirty = false;
       clearTimeout(saveTimer);
       setTimeout(() => loadCurrent(false), 500);
