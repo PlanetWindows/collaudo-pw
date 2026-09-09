@@ -49,6 +49,7 @@
     }
 
     s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
+    s = s.replace('</body>', '<script src="sync.js?v=3"><' + '/script>\n</body>');
 
     document.open();
     document.write(s);
@@ -59,6 +60,5 @@
   }
 })();
 </script>
-<script src="sync.js?v=2"></script>
 </body>
 </html>
