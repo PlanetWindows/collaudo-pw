@@ -117,6 +117,20 @@
     });
   }
 
+  function payloadScore(payload) {
+    if (!payload) return 0;
+    let score = 0;
+    const fields = payload.fields || {};
+
+    Object.entries(fields).forEach(([key, value]) => {
+      if (key !== 'commessa' && String(value || '').trim()) score += 1;
+    });
+
+    score += Object.keys(payload.esiti || {}).length;
+    score += Object.values(payload.signatures || {}).filter(Boolean).length;
+    return score;
+  }
+
   function deepEqual(a, b) {
     return JSON.stringify(a) === JSON.stringify(b);
   }
@@ -227,12 +241,30 @@
       const changedLocallyDuringLoad = snapshotNow !== snapshotBeforeLoad;
 
       if (data.found) {
-        if (isNewKey || forceApply || (data.updated_at && data.updated_at !== lastUpdatedAt)) {
-          if (!localDirty && !changedLocallyDuringLoad && !savingRemote) {
-            basePayload = data.payload || {};
-            lastUpdatedAt = data.updated_at || '';
-            applyDom(data.payload, isNewKey ? 'Scheda condivisa caricata' : 'Aggiornata da un altro PC');
+        const remotePayload = data.payload || {};
+        const remoteChanged = data.updated_at && data.updated_at !== lastUpdatedAt;
+        const canApply = !localDirty && !changedLocallyDuringLoad && !savingRemote;
+
+        if (isNewKey) {
+          const localPayload = collectDom();
+          const remoteScore = payloadScore(remotePayload);
+          const localScore = payloadScore(localPayload);
+
+          basePayload = remotePayload;
+          lastUpdatedAt = data.updated_at || '';
+
+          if (remoteScore === 0 && localScore > 0) {
+            lastLocalSnapshot = stablePayload(localPayload);
+            localDirty = true;
+            setStatus('Recupero dati locali e sincronizzo…', 0);
+            queueSave(0);
+          } else if (canApply) {
+            applyDom(remotePayload, 'Scheda condivisa caricata');
           }
+        } else if ((forceApply || remoteChanged) && canApply) {
+          basePayload = remotePayload;
+          lastUpdatedAt = data.updated_at || '';
+          applyDom(remotePayload, 'Aggiornata da un altro PC');
         }
       } else if (isNewKey) {
         basePayload = {};
