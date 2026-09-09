@@ -12,10 +12,33 @@
   `;
   document.head.appendChild(fontStyle);
 
+  function addPvcSpecialForm() {
+    if (typeof FORMS === 'undefined' || !FORMS.pvc) return;
+
+    if (!FORMS.pvc_speciali) {
+      FORMS.pvc_speciali = JSON.parse(JSON.stringify(FORMS.pvc));
+      FORMS.pvc_speciali.title = 'SCHEDA COLLAUDO - PVC - PEZZI SPECIALI';
+    }
+
+    const formType = document.getElementById('formType');
+    if (!formType || formType.querySelector('option[value="pvc_speciali"]')) return;
+
+    const option = document.createElement('option');
+    option.value = 'pvc_speciali';
+    option.textContent = 'PVC - Pezzi speciali';
+
+    const pvcOption = formType.querySelector('option[value="pvc"]');
+    if (pvcOption && pvcOption.nextSibling) {
+      formType.insertBefore(option, pvcOption.nextSibling);
+    } else {
+      formType.appendChild(option);
+    }
+  }
+
   function updatePvcPhaseNames() {
     if (typeof FORMS === 'undefined') return;
 
-    ['pvc', 'pvc_vie_fuga'].forEach(key => {
+    ['pvc', 'pvc_speciali', 'pvc_vie_fuga'].forEach(key => {
       const phases = FORMS[key] && FORMS[key].phases;
       if (!Array.isArray(phases)) return;
 
@@ -45,6 +68,7 @@
     }
   }
 
+  addPvcSpecialForm();
   updatePvcPhaseNames();
   updateVisiblePvcPhaseNames();
   setTimeout(updateVisiblePvcPhaseNames, 0);
