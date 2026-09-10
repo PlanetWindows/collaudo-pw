@@ -12,13 +12,35 @@
     .pw-associated-operator {
       margin: 8px 0 10px;
     }
+    .pw-operator-row {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
     .pw-associated-operator .pw-operator-name {
+      flex: 1;
       border: 1px solid #bbb;
       border-radius: 6px;
       background: #f7f7f7;
       padding: 8px 10px;
       font-weight: 600;
       line-height: 1.25;
+      min-width: 0;
+    }
+    .pw-change-operator {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      padding: 6px 9px;
+      font-size: 11px;
+    }
+    .pw-operator-select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 7px 8px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
     }
     @media print {
       .pw-associated-operator {
@@ -29,6 +51,10 @@
         border-radius: 0;
         background: #fff;
         padding: 1.5mm 2mm;
+      }
+      .pw-change-operator,
+      .pw-operator-select {
+        display: none !important;
       }
     }
   `;
@@ -63,6 +89,21 @@
       'GOZZI ANDREA'
     ]
   };
+
+  const PVC_OPERATOR_LIST = [
+    'GHIDONI PIERLUIGI',
+    'JHINAOUI RIADH',
+    'APOLLO FRANCESCO',
+    "D'ALESSANDRO DANIELE",
+    'FURLANI ROBERTO',
+    'GOZZI ANDREA'
+  ];
+
+  function escHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    })[ch]);
+  }
 
   function addPvcSpecialForm() {
     if (typeof FORMS === 'undefined' || !FORMS.pvc) return;
@@ -120,6 +161,23 @@
     }
   }
 
+  function getLocalSavedOperator(type, index) {
+    try {
+      const raw = localStorage.getItem(`pw-collaudo-${type}`);
+      if (!raw) return '';
+      const data = JSON.parse(raw);
+      return String(data?.fields?.[`phase_operator_${index}`] || '').trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function saveOperatorChange(hiddenInput) {
+    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+    if (typeof autoSave === 'function') autoSave();
+    if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(100);
+  }
+
   function applyPvcOperators() {
     const typeSel = document.getElementById('formType');
     const type = typeSel?.value || '';
@@ -128,26 +186,82 @@
 
     const rows = document.querySelectorAll('#formArea tbody tr');
     rows.forEach((row, index) => {
-      const operator = operators[index];
+      const defaultOperator = operators[index];
       const resultBox = row.querySelector('.resultbox');
-      if (!operator || !resultBox) return;
+      if (!defaultOperator || !resultBox) return;
 
-      resultBox.querySelector('.pw-associated-operator')?.remove();
+      const existing = resultBox.querySelector('.pw-associated-operator');
+      if (existing) return;
 
       const signatureLabel = Array.from(resultBox.querySelectorAll('label'))
         .find(label => (label.textContent || '').trim().toLowerCase() === 'firma operatore');
       if (!signatureLabel) return;
 
+      const fieldName = `phase_operator_${index}`;
+      const savedOperator = getLocalSavedOperator(type, index);
+      const currentOperator = PVC_OPERATOR_LIST.includes(savedOperator) ? savedOperator : defaultOperator;
+
       const block = document.createElement('div');
       block.className = 'pw-associated-operator';
-      block.innerHTML = `<label>Operatore associato</label><div class="pw-operator-name">${operator}</div>`;
+      block.dataset.operatorIndex = String(index);
+      block.dataset.defaultOperator = defaultOperator;
+      block.innerHTML = `
+        <label>Operatore associato</label>
+        <div class="pw-operator-row">
+          <div class="pw-operator-name">${escHtml(currentOperator)}</div>
+          <button type="button" class="pw-change-operator">Cambia operatore</button>
+        </div>
+        <select class="pw-operator-select" hidden aria-label="Cambia operatore">
+          ${PVC_OPERATOR_LIST.map(name => `<option value="${escHtml(name)}"${name === currentOperator ? ' selected' : ''}>${escHtml(name)}</option>`).join('')}
+        </select>
+        <input type="hidden" data-field="${fieldName}" value="${escHtml(currentOperator)}">
+      `;
+
+      const button = block.querySelector('.pw-change-operator');
+      const select = block.querySelector('.pw-operator-select');
+      const nameEl = block.querySelector('.pw-operator-name');
+      const hiddenInput = block.querySelector(`input[data-field="${fieldName}"]`);
+
+      button.addEventListener('click', () => {
+        select.hidden = !select.hidden;
+        if (!select.hidden) select.focus();
+      });
+
+      select.addEventListener('change', () => {
+        const selected = select.value || defaultOperator;
+        nameEl.textContent = selected;
+        hiddenInput.value = selected;
+        select.hidden = true;
+        saveOperatorChange(hiddenInput);
+      });
+
       resultBox.insertBefore(block, signatureLabel);
+    });
+  }
+
+  function syncOperatorDisplays() {
+    const type = document.getElementById('formType')?.value || '';
+    if (!PVC_OPERATORS[type]) return;
+
+    document.querySelectorAll('.pw-associated-operator').forEach(block => {
+      const index = Number(block.dataset.operatorIndex);
+      const defaultOperator = PVC_OPERATORS[type]?.[index] || block.dataset.defaultOperator || '';
+      const hiddenInput = block.querySelector(`input[data-field="phase_operator_${index}"]`);
+      const nameEl = block.querySelector('.pw-operator-name');
+      const select = block.querySelector('.pw-operator-select');
+      if (!hiddenInput || !nameEl || !select) return;
+
+      const value = PVC_OPERATOR_LIST.includes(hiddenInput.value) ? hiddenInput.value : defaultOperator;
+      if (hiddenInput.value !== value) hiddenInput.value = value;
+      if (nameEl.textContent !== value) nameEl.textContent = value;
+      if (select.value !== value) select.value = value;
     });
   }
 
   function refreshPvcUi() {
     updateVisiblePvcPhaseNames();
     applyPvcOperators();
+    syncOperatorDisplays();
   }
 
   addPvcSpecialForm();
@@ -159,6 +273,8 @@
   if (formType) {
     formType.addEventListener('change', () => setTimeout(refreshPvcUi, 0));
   }
+
+  setInterval(syncOperatorDisplays, 700);
 
   const script = document.createElement('script');
   script.src = 'sync2.js?v=2';
