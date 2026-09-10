@@ -9,8 +9,60 @@
     html, body, body *, input, select, button, textarea {
       font-family: 'Poppins', Arial, Helvetica, sans-serif !important;
     }
+    .pw-associated-operator {
+      margin: 8px 0 10px;
+    }
+    .pw-associated-operator .pw-operator-name {
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      background: #f7f7f7;
+      padding: 8px 10px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    @media print {
+      .pw-associated-operator {
+        margin: 2mm 0 2mm;
+      }
+      .pw-associated-operator .pw-operator-name {
+        border: 0.2mm solid #aaa;
+        border-radius: 0;
+        background: #fff;
+        padding: 1.5mm 2mm;
+      }
+    }
   `;
   document.head.appendChild(fontStyle);
+
+  const PVC_OPERATORS = {
+    pvc: [
+      'GHIDONI PIERLUIGI',
+      'GHIDONI PIERLUIGI',
+      'JHINAOUI RIADH',
+      'APOLLO FRANCESCO',
+      "D'ALESSANDRO DANIELE",
+      'GOZZI ANDREA',
+      'GOZZI ANDREA'
+    ],
+    pvc_speciali: [
+      'GHIDONI PIERLUIGI',
+      'GHIDONI PIERLUIGI',
+      'JHINAOUI RIADH',
+      'FURLANI ROBERTO',
+      'FURLANI ROBERTO',
+      'GOZZI ANDREA',
+      'GOZZI ANDREA'
+    ],
+    pvc_vie_fuga: [
+      'GHIDONI PIERLUIGI',
+      'GHIDONI PIERLUIGI',
+      'JHINAOUI RIADH',
+      'FURLANI ROBERTO',
+      'FURLANI ROBERTO',
+      'GOZZI ANDREA',
+      'GOZZI ANDREA'
+    ]
+  };
 
   function addPvcSpecialForm() {
     if (typeof FORMS === 'undefined' || !FORMS.pvc) return;
@@ -68,14 +120,44 @@
     }
   }
 
+  function applyPvcOperators() {
+    const typeSel = document.getElementById('formType');
+    const type = typeSel?.value || '';
+    const operators = PVC_OPERATORS[type];
+    if (!operators) return;
+
+    const rows = document.querySelectorAll('#formArea tbody tr');
+    rows.forEach((row, index) => {
+      const operator = operators[index];
+      const resultBox = row.querySelector('.resultbox');
+      if (!operator || !resultBox) return;
+
+      resultBox.querySelector('.pw-associated-operator')?.remove();
+
+      const signatureLabel = Array.from(resultBox.querySelectorAll('label'))
+        .find(label => (label.textContent || '').trim().toLowerCase() === 'firma operatore');
+      if (!signatureLabel) return;
+
+      const block = document.createElement('div');
+      block.className = 'pw-associated-operator';
+      block.innerHTML = `<label>Operatore associato</label><div class="pw-operator-name">${operator}</div>`;
+      resultBox.insertBefore(block, signatureLabel);
+    });
+  }
+
+  function refreshPvcUi() {
+    updateVisiblePvcPhaseNames();
+    applyPvcOperators();
+  }
+
   addPvcSpecialForm();
   updatePvcPhaseNames();
-  updateVisiblePvcPhaseNames();
-  setTimeout(updateVisiblePvcPhaseNames, 0);
+  refreshPvcUi();
+  setTimeout(refreshPvcUi, 0);
 
   const formType = document.getElementById('formType');
   if (formType) {
-    formType.addEventListener('change', () => setTimeout(updateVisiblePvcPhaseNames, 0));
+    formType.addEventListener('change', () => setTimeout(refreshPvcUi, 0));
   }
 
   const script = document.createElement('script');
