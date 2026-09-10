@@ -1,4 +1,6 @@
 (() => {
+  const SIGNATURE_MARKER_VERSION = 'v3';
+
   const style = document.createElement('style');
   style.textContent = `
     .signature-preview {
@@ -61,43 +63,51 @@
     return String(row.querySelector(`input[data-field="phase_operator_${index}"]`)?.value || '').trim();
   }
 
-  function getSavedConfirmation(type, index) {
+  function markerField(index) {
+    return `phase_signature_plus_v3_${index}`;
+  }
+
+  function markerValue(operator) {
+    return operator ? `${SIGNATURE_MARKER_VERSION}:${operator}` : '';
+  }
+
+  function getSavedMarker(type, index) {
     try {
       const raw = localStorage.getItem(`pw-collaudo-${type}`);
       if (!raw) return '';
       const data = JSON.parse(raw);
-      return String(data?.fields?.[`phase_signature_confirmed_${index}`] || '').trim();
+      return String(data?.fields?.[markerField(index)] || '').trim();
     } catch (_) {
       return '';
     }
   }
 
-  function ensureConfirmationInput(row, index) {
-    const fieldName = `phase_signature_confirmed_${index}`;
+  function ensureMarkerInput(row, index) {
+    const fieldName = markerField(index);
     let input = row.querySelector(`input[data-field="${fieldName}"]`);
     if (input) return input;
 
     input = document.createElement('input');
     input.type = 'hidden';
     input.dataset.field = fieldName;
-    input.value = getSavedConfirmation(getType(), index);
+    input.value = getSavedMarker(getType(), index);
     row.querySelector('.resultbox')?.appendChild(input);
     return input;
   }
 
-  function saveConfirmation(input, value) {
-    if (!input) return;
-    if (input.value === value) return;
+  function saveMarker(input, value) {
+    if (!input || input.value === value) return;
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     if (typeof autoSave === 'function') autoSave();
     if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(120);
   }
 
-  function clearSignatureDom(index) {
+  function clearSignatureDom(index, persist = true) {
     const key = `phase_sign_${index}`;
     const img = document.querySelector(`img[data-signature="${key}"]`);
     if (!img) return false;
+
     const hadSignature = img.dataset.hasSignature === '1' || !!img.getAttribute('src');
     if (!hadSignature) return false;
 
@@ -110,21 +120,24 @@
       const empty = document.querySelector(`[data-signature-placeholder="${key}"]`);
       if (empty) empty.style.display = '';
     }
-    return true;
-  }
 
-  function migrateOldAutomaticSignature(row, index) {
-    const confirmation = ensureConfirmationInput(row, index);
-    const operator = getOperator(row, index);
-    const confirmed = !!operator && confirmation.value === operator;
-    if (confirmed) return false;
-
-    const cleared = clearSignatureDom(index);
-    if (cleared) {
+    if (persist) {
       if (typeof autoSave === 'function') autoSave();
       if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(180);
     }
-    return cleared;
+    return true;
+  }
+
+  function isExplicitlyAdded(row, index) {
+    const operator = getOperator(row, index);
+    const marker = ensureMarkerInput(row, index);
+    return !!operator && marker.value === markerValue(operator);
+  }
+
+  function enforceSignatureState(row, index) {
+    const explicit = isExplicitlyAdded(row, index);
+    if (!explicit) clearSignatureDom(index, true);
+    return explicit;
   }
 
   function refreshSignatureUi() {
@@ -135,16 +148,11 @@
       const actions = row.querySelector('.signature-actions');
       if (!preview || !actions) return;
 
-      const confirmation = ensureConfirmationInput(row, index);
-      const operator = getOperator(row, index);
-      const isConfirmed = !!operator && confirmation.value === operator;
+      const explicit = enforceSignatureState(row, index);
+      const img = preview.querySelector('img[data-signature]');
+      const hasSignature = explicit && img?.dataset.hasSignature === '1' && !!img.getAttribute('src');
 
-      migrateOldAutomaticSignature(row, index);
-
-      let officialButton = row.querySelector('.pw-use-official-signature');
-      if (officialButton && officialButton.parentElement !== actions) {
-        actions.insertBefore(officialButton, actions.firstChild);
-      }
+      const officialButton = row.querySelector('.pw-use-official-signature');
       if (officialButton) officialButton.style.display = 'none';
 
       let proxy = preview.querySelector('.pw-signature-plus-proxy');
@@ -157,38 +165,36 @@
         proxy.setAttribute('aria-label', 'Inserisci la firma associata all’operatore');
         preview.appendChild(proxy);
 
-        proxy.addEventListener('click', () => {
+        proxy.addEventListener('click', async () => {
           const currentOperator = getOperator(row, index);
           if (!currentOperator) return;
-          const marker = ensureConfirmationInput(row, index);
-          saveConfirmation(marker, currentOperator);
-          preview.classList.remove('pw-signature-awaiting-plus');
 
           const sourceButton = row.querySelector('.pw-use-official-signature');
-          if (sourceButton) sourceButton.click();
+          if (!sourceButton) {
+            alert('Firma associata non disponibile. Riprova tra un istante.');
+            return;
+          }
+
+          const marker = ensureMarkerInput(row, index);
+          saveMarker(marker, markerValue(currentOperator));
+          preview.classList.remove('pw-signature-awaiting-plus');
+          sourceButton.click();
 
           setTimeout(() => {
-            const img = preview.querySelector('img[data-signature]');
-            const hasSignature = img?.dataset.hasSignature === '1' && !!img.getAttribute('src');
-            if (!hasSignature) {
-              saveConfirmation(marker, '');
-              preview.classList.add('pw-signature-awaiting-plus');
-            }
+            const currentImg = preview.querySelector('img[data-signature]');
+            const loaded = currentImg?.dataset.hasSignature === '1' && !!currentImg.getAttribute('src');
+            if (!loaded) saveMarker(marker, '');
             refreshSignatureUi();
-          }, 1200);
+          }, 900);
         });
       }
 
       actions.querySelectorAll('button').forEach(button => {
         const text = (button.textContent || '').trim().toLowerCase();
-        if (button.classList.contains('pw-use-official-signature')) {
-          button.style.display = 'none';
-        } else if (text.includes('allega / cambia firma')) {
+        if (button.classList.contains('pw-use-official-signature') || text.includes('allega / cambia firma')) {
           button.style.display = 'none';
         } else if (text.includes('rimuovi firma')) {
           button.classList.add('pw-signature-remove-small');
-          const img = preview.querySelector('img[data-signature]');
-          const hasSignature = isConfirmed && img?.dataset.hasSignature === '1' && !!img.getAttribute('src');
           button.style.display = hasSignature ? '' : 'none';
         }
       });
@@ -199,7 +205,7 @@
       const empty = preview.querySelector('.signature-empty');
       if (empty) empty.style.display = 'none';
 
-      preview.classList.toggle('pw-signature-awaiting-plus', !isConfirmed);
+      preview.classList.toggle('pw-signature-awaiting-plus', !hasSignature);
     });
   }
 
@@ -211,9 +217,9 @@
     const rows = Array.from(document.querySelectorAll('#formArea tbody tr'));
     const index = rows.indexOf(row);
     if (index < 0) return;
-    const marker = ensureConfirmationInput(row, index);
-    saveConfirmation(marker, '');
-    clearSignatureDom(index);
+
+    saveMarker(ensureMarkerInput(row, index), '');
+    clearSignatureDom(index, true);
     setTimeout(refreshSignatureUi, 0);
   }, true);
 
@@ -222,12 +228,14 @@
     if (!button || !isPvcForm()) return;
     const text = (button.textContent || '').trim().toLowerCase();
     if (!text.includes('rimuovi firma')) return;
+
     const row = button.closest('tr');
     if (!row) return;
     const rows = Array.from(document.querySelectorAll('#formArea tbody tr'));
     const index = rows.indexOf(row);
     if (index < 0) return;
-    saveConfirmation(ensureConfirmationInput(row, index), '');
+
+    saveMarker(ensureMarkerInput(row, index), '');
     setTimeout(refreshSignatureUi, 0);
   }, true);
 
