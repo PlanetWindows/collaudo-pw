@@ -14,8 +14,8 @@
     }
     .pw-operator-row {
       display: flex;
-      gap: 6px;
-      align-items: stretch;
+      gap: 5px;
+      align-items: center;
     }
     .pw-associated-operator .pw-operator-name {
       flex: 1;
@@ -24,14 +24,19 @@
       background: #f7f7f7;
       padding: 8px 10px;
       font-weight: 600;
-      line-height: 1.25;
+      line-height: 1.2;
       min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .pw-change-operator {
       flex: 0 0 auto;
       white-space: nowrap;
-      padding: 6px 9px;
-      font-size: 11px;
+      padding: 3px 6px;
+      font-size: 9px;
+      line-height: 1.1;
+      min-height: 0;
     }
     .pw-operator-select {
       width: 100%;
@@ -51,6 +56,9 @@
         border-radius: 0;
         background: #fff;
         padding: 1.5mm 2mm;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
       }
       .pw-change-operator,
       .pw-operator-select {
