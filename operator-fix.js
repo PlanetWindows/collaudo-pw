@@ -1,4 +1,9 @@
 (() => {
+  const mobileStyle = document.createElement('link');
+  mobileStyle.rel = 'stylesheet';
+  mobileStyle.href = 'mobile.css?v=1';
+  document.head.appendChild(mobileStyle);
+
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
   const OLD_OPERATOR = 'APOLLO FRANCESCO';
