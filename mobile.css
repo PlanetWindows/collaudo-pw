@@ -1,0 +1,304 @@
+@media (max-width: 850px) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0 !important;
+  }
+
+  .app {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .topbar {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .topbar > strong,
+  .topbar > #formType,
+  .topbar > .status {
+    grid-column: 1 / -1 !important;
+  }
+
+  .topbar > strong {
+    font-size: 17px !important;
+  }
+
+  .topbar select,
+  .topbar button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 9px 10px !important;
+    box-sizing: border-box !important;
+    font-size: 14px !important;
+    white-space: normal !important;
+  }
+
+  .sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .notice {
+    margin: 0 0 10px !important;
+    padding: 9px !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .header-grid {
+    grid-template-columns: 74px 1fr !important;
+    width: 100% !important;
+  }
+
+  .header-grid > div {
+    min-width: 0 !important;
+    padding: 8px !important;
+  }
+
+  .header-grid .title,
+  .title {
+    font-size: 17px !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .header-grid .rev {
+    grid-column: 1 / -1 !important;
+  }
+
+  .logo {
+    max-width: 64px !important;
+    height: auto !important;
+  }
+
+  .meta {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .meta .cell {
+    min-width: 0 !important;
+    border-right: 0 !important;
+    border-top: 1px solid #111 !important;
+    padding: 9px !important;
+  }
+
+  .meta input[type="text"],
+  .meta input[type="date"],
+  input[type="text"],
+  input[type="date"],
+  select {
+    max-width: 100% !important;
+    min-height: 42px !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+  }
+
+  #formArea,
+  #formArea table,
+  #formArea tbody,
+  #formArea tr,
+  #formArea td {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  #formArea tr {
+    margin: 0 0 14px !important;
+    border: 1px solid #b8b8b8 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+
+  #formArea td {
+    padding: 10px !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.45 !important;
+  }
+
+  #formArea td::before {
+    margin-bottom: 6px !important;
+    font-size: 11px !important;
+    letter-spacing: .02em !important;
+  }
+
+  .phase {
+    font-size: 15px !important;
+    line-height: 1.3 !important;
+  }
+
+  .resultbox {
+    display: grid !important;
+    gap: 9px !important;
+    min-width: 0 !important;
+  }
+
+  .resultbox label {
+    font-size: 12px !important;
+  }
+
+  .inlinechecks {
+    display: flex !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .choice {
+    min-height: 42px !important;
+    padding: 8px 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    box-sizing: border-box !important;
+  }
+
+  .choice input {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .pw-associated-operator {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 5px 0 8px !important;
+  }
+
+  .pw-operator-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 6px !important;
+    align-items: center !important;
+  }
+
+  .pw-associated-operator .pw-operator-name {
+    min-width: 0 !important;
+    padding: 9px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .pw-change-operator {
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 5px 7px !important;
+    font-size: 9px !important;
+  }
+
+  .pw-operator-select {
+    width: 100% !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+  }
+
+  .signature-wrap,
+  .signature-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .signature-preview {
+    height: 110px !important;
+  }
+
+  .signature-image {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  .pw-signature-plus-proxy {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    font-size: 26px !important;
+    line-height: 42px !important;
+  }
+
+  .signature-actions button:not(.pw-use-official-signature) {
+    min-height: 34px !important;
+  }
+
+  .extra,
+  .extra-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .extra-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .extra-row .lbl {
+    border-right: 0 !important;
+  }
+
+  .footer-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .footer-actions button {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 10px !important;
+    font-size: 14px !important;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .topbar > * {
+    grid-column: 1 !important;
+  }
+
+  .sheet {
+    padding: 8px !important;
+  }
+
+  .header-grid {
+    grid-template-columns: 60px 1fr !important;
+  }
+
+  .header-grid .title,
+  .title {
+    font-size: 15px !important;
+  }
+
+  #formArea td {
+    padding: 9px !important;
+  }
+}
