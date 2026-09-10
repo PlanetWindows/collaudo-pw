@@ -1,7 +1,7 @@
 (() => {
   const mobileStyle = document.createElement('link');
   mobileStyle.rel = 'stylesheet';
-  mobileStyle.href = 'mobile.css?v=1';
+  mobileStyle.href = 'mobile.css?v=2';
   document.head.appendChild(mobileStyle);
 
   const TARGET_TYPE = 'pvc';
