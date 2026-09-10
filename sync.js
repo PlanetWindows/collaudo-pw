@@ -107,10 +107,65 @@
     'GOZZI ANDREA'
   ];
 
+  const SIGNATURES_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
+  const CODE_KEY = 'pw-collaudo-access-code';
+  let OPERATOR_SIGNATURES = {};
+  let signaturesLoading = false;
+
   function escHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     })[ch]);
+  }
+
+  async function loadOperatorSignatures() {
+    if (signaturesLoading || Object.keys(OPERATOR_SIGNATURES).length) return;
+    const code = (localStorage.getItem(CODE_KEY) || '').trim();
+    if (!code) return;
+    signaturesLoading = true;
+    try {
+      const res = await fetch(SIGNATURES_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signatures', code })
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      OPERATOR_SIGNATURES = data?.signatures || {};
+      applyAllOfficialSignatures();
+    } catch (err) {
+      console.error('Caricamento firme operatori', err);
+    } finally {
+      signaturesLoading = false;
+    }
+  }
+
+  function setOfficialSignature(index, operator, force = false) {
+    const key = `phase_sign_${index}`;
+    const img = document.querySelector(`img[data-signature="${key}"]`);
+    if (!img || typeof setSignatureImage !== 'function') return;
+
+    const dataUrl = OPERATOR_SIGNATURES[operator] || '';
+    if (!dataUrl && !force) return;
+
+    const current = img.getAttribute('src') || '';
+    if (!force && current === dataUrl && img.dataset.hasSignature === '1') return;
+
+    setSignatureImage(key, dataUrl);
+    if (typeof autoSave === 'function') autoSave();
+    if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(120);
+  }
+
+  function applyAllOfficialSignatures() {
+    const type = document.getElementById('formType')?.value || '';
+    if (!PVC_OPERATORS[type] || !Object.keys(OPERATOR_SIGNATURES).length) return;
+
+    document.querySelectorAll('.pw-associated-operator').forEach(block => {
+      const index = Number(block.dataset.operatorIndex);
+      const hiddenInput = block.querySelector(`input[data-field="phase_operator_${index}"]`);
+      const operator = String(hiddenInput?.value || PVC_OPERATORS[type]?.[index] || '').trim();
+      if (operator && OPERATOR_SIGNATURES[operator]) setOfficialSignature(index, operator, false);
+    });
   }
 
   function addPvcSpecialForm() {
@@ -240,6 +295,7 @@
         nameEl.textContent = selected;
         hiddenInput.value = selected;
         select.hidden = true;
+        setOfficialSignature(index, selected, true);
         saveOperatorChange(hiddenInput);
       });
 
@@ -270,6 +326,8 @@
     updateVisiblePvcPhaseNames();
     applyPvcOperators();
     syncOperatorDisplays();
+    loadOperatorSignatures();
+    setTimeout(applyAllOfficialSignatures, 120);
   }
 
   addPvcSpecialForm();
@@ -282,7 +340,11 @@
     formType.addEventListener('change', () => setTimeout(refreshPvcUi, 0));
   }
 
-  setInterval(syncOperatorDisplays, 700);
+  setInterval(() => {
+    syncOperatorDisplays();
+    if (!Object.keys(OPERATOR_SIGNATURES).length) loadOperatorSignatures();
+    else applyAllOfficialSignatures();
+  }, 900);
 
   const script = document.createElement('script');
   script.src = 'sync2.js?v=2';
