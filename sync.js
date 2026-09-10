@@ -47,6 +47,14 @@
       background: #fff;
       font-size: 12px;
     }
+    .pw-use-official-signature {
+      min-width: 30px;
+      padding: 3px 8px !important;
+      font-size: 18px !important;
+      line-height: 1 !important;
+      font-weight: 700;
+      cursor: pointer;
+    }
     @media print {
       .pw-associated-operator {
         margin: 2mm 0 2mm;
@@ -61,7 +69,8 @@
         text-overflow: clip;
       }
       .pw-change-operator,
-      .pw-operator-select {
+      .pw-operator-select,
+      .pw-use-official-signature {
         display: none !important;
       }
     }
@@ -132,7 +141,6 @@
       if (!res.ok) return;
       const data = await res.json();
       OPERATOR_SIGNATURES = data?.signatures || {};
-      applyAllOfficialSignatures();
     } catch (err) {
       console.error('Caricamento firme operatori', err);
     } finally {
@@ -140,31 +148,51 @@
     }
   }
 
-  function setOfficialSignature(index, operator, force = false) {
+  function setOfficialSignature(index, operator) {
     const key = `phase_sign_${index}`;
-    const img = document.querySelector(`img[data-signature="${key}"]`);
-    if (!img || typeof setSignatureImage !== 'function') return;
-
     const dataUrl = OPERATOR_SIGNATURES[operator] || '';
-    if (!dataUrl && !force) return;
-
-    const current = img.getAttribute('src') || '';
-    if (!force && current === dataUrl && img.dataset.hasSignature === '1') return;
-
+    if (!dataUrl) {
+      alert(`Firma non ancora disponibile per ${operator}.`);
+      return;
+    }
+    if (typeof setSignatureImage !== 'function') return;
     setSignatureImage(key, dataUrl);
     if (typeof autoSave === 'function') autoSave();
     if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(120);
   }
 
-  function applyAllOfficialSignatures() {
-    const type = document.getElementById('formType')?.value || '';
-    if (!PVC_OPERATORS[type] || !Object.keys(OPERATOR_SIGNATURES).length) return;
+  function clearPhaseSignature(index) {
+    const key = `phase_sign_${index}`;
+    if (typeof setSignatureImage !== 'function') return;
+    setSignatureImage(key, '');
+    if (typeof autoSave === 'function') autoSave();
+    if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(120);
+  }
 
-    document.querySelectorAll('.pw-associated-operator').forEach(block => {
-      const index = Number(block.dataset.operatorIndex);
-      const hiddenInput = block.querySelector(`input[data-field="phase_operator_${index}"]`);
-      const operator = String(hiddenInput?.value || PVC_OPERATORS[type]?.[index] || '').trim();
-      if (operator && OPERATOR_SIGNATURES[operator]) setOfficialSignature(index, operator, false);
+  function addSignaturePlusButtons() {
+    const type = document.getElementById('formType')?.value || '';
+    if (!PVC_OPERATORS[type]) return;
+
+    document.querySelectorAll('#formArea tbody tr').forEach((row, index) => {
+      const resultBox = row.querySelector('.resultbox');
+      if (!resultBox) return;
+      const actions = resultBox.querySelector('.signature-actions');
+      if (!actions || actions.querySelector('.pw-use-official-signature')) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pw-use-official-signature';
+      btn.textContent = '+';
+      btn.title = 'Inserisci firma associata all\'operatore';
+      btn.setAttribute('aria-label', 'Inserisci firma associata all\'operatore');
+      btn.addEventListener('click', async () => {
+        if (!Object.keys(OPERATOR_SIGNATURES).length) await loadOperatorSignatures();
+        const hiddenInput = row.querySelector(`input[data-field="phase_operator_${index}"]`);
+        const operator = String(hiddenInput?.value || PVC_OPERATORS[type]?.[index] || '').trim();
+        if (!operator) return;
+        setOfficialSignature(index, operator);
+      });
+      actions.insertBefore(btn, actions.firstChild);
     });
   }
 
@@ -295,7 +323,7 @@
         nameEl.textContent = selected;
         hiddenInput.value = selected;
         select.hidden = true;
-        setOfficialSignature(index, selected, true);
+        clearPhaseSignature(index);
         saveOperatorChange(hiddenInput);
       });
 
@@ -326,8 +354,8 @@
     updateVisiblePvcPhaseNames();
     applyPvcOperators();
     syncOperatorDisplays();
+    addSignaturePlusButtons();
     loadOperatorSignatures();
-    setTimeout(applyAllOfficialSignatures, 120);
   }
 
   addPvcSpecialForm();
@@ -342,8 +370,8 @@
 
   setInterval(() => {
     syncOperatorDisplays();
+    addSignaturePlusButtons();
     if (!Object.keys(OPERATOR_SIGNATURES).length) loadOperatorSignatures();
-    else applyAllOfficialSignatures();
   }, 900);
 
   const script = document.createElement('script');
