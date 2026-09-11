@@ -9,6 +9,11 @@
   archiveScript.async = false;
   document.head.appendChild(archiveScript);
 
+  const accessScript = document.createElement('script');
+  accessScript.src = 'access-session.js?v=1';
+  accessScript.async = false;
+  document.head.appendChild(accessScript);
+
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
   const OLD_OPERATOR = 'APOLLO FRANCESCO';
