@@ -14,6 +14,11 @@
   accessScript.async = false;
   document.head.appendChild(accessScript);
 
+  const zipScript = document.createElement('script');
+  zipScript.src = 'zip-export.js?v=1';
+  zipScript.async = false;
+  document.head.appendChild(zipScript);
+
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
   const OLD_OPERATOR = 'APOLLO FRANCESCO';
