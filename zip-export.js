@@ -2,6 +2,8 @@
   const API_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
   const OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
+  const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+  const JSZIP_INTEGRITY = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -13,6 +15,22 @@
 
   function getOfficeCode() {
     return String(localStorage.getItem(OFFICE_LOCAL_KEY) || sessionStorage.getItem(OFFICE_SESSION_KEY) || '').trim();
+  }
+
+  function loadJSZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (window.__pwJSZipPromise) return window.__pwJSZipPromise;
+
+    window.__pwJSZipPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = JSZIP_URL;
+      script.integrity = JSZIP_INTEGRITY;
+      script.crossOrigin = 'anonymous';
+      script.onload = () => window.JSZip ? resolve(window.JSZip) : reject(new Error('jszip_not_available'));
+      script.onerror = () => reject(new Error('jszip_load_failed'));
+      document.head.appendChild(script);
+    });
+    return window.__pwJSZipPromise;
   }
 
   async function api(body) {
@@ -44,95 +62,6 @@
       .replace(/^_+|_+$/g, '') || 'collaudo';
   }
 
-  function crcTable() {
-    const table = new Uint32Array(256);
-    for (let n = 0; n < 256; n++) {
-      let c = n;
-      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-      table[n] = c >>> 0;
-    }
-    return table;
-  }
-  const CRC_TABLE = crcTable();
-
-  function crc32(bytes) {
-    let c = 0xFFFFFFFF;
-    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
-    return (c ^ 0xFFFFFFFF) >>> 0;
-  }
-
-  function makeZip(files) {
-    const enc = new TextEncoder();
-    const localParts = [];
-    const centralParts = [];
-    let offset = 0;
-
-    const now = new Date();
-    const year = Math.max(1980, now.getFullYear());
-    const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((Math.floor(now.getSeconds() / 2)) & 31);
-    const dosDate = (((year - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
-
-    for (const file of files) {
-      const name = enc.encode(file.name);
-      const data = file.data instanceof Uint8Array ? file.data : enc.encode(String(file.data ?? ''));
-      const crc = crc32(data);
-
-      const localHeader = new Uint8Array(30 + name.length);
-      const localView = new DataView(localHeader.buffer);
-      localView.setUint32(0, 0x04034b50, true);
-      localView.setUint16(4, 20, true);
-      localView.setUint16(6, 0x0800, true);
-      localView.setUint16(8, 0, true);
-      localView.setUint16(10, dosTime, true);
-      localView.setUint16(12, dosDate, true);
-      localView.setUint32(14, crc, true);
-      localView.setUint32(18, data.length, true);
-      localView.setUint32(22, data.length, true);
-      localView.setUint16(26, name.length, true);
-      localView.setUint16(28, 0, true);
-      localHeader.set(name, 30);
-      localParts.push(localHeader, data);
-
-      const centralHeader = new Uint8Array(46 + name.length);
-      const centralView = new DataView(centralHeader.buffer);
-      centralView.setUint32(0, 0x02014b50, true);
-      centralView.setUint16(4, 20, true);
-      centralView.setUint16(6, 20, true);
-      centralView.setUint16(8, 0x0800, true);
-      centralView.setUint16(10, 0, true);
-      centralView.setUint16(12, dosTime, true);
-      centralView.setUint16(14, dosDate, true);
-      centralView.setUint32(16, crc, true);
-      centralView.setUint32(20, data.length, true);
-      centralView.setUint32(24, data.length, true);
-      centralView.setUint16(28, name.length, true);
-      centralView.setUint16(30, 0, true);
-      centralView.setUint16(32, 0, true);
-      centralView.setUint16(34, 0, true);
-      centralView.setUint16(36, 0, true);
-      centralView.setUint32(38, 0, true);
-      centralView.setUint32(42, offset, true);
-      centralHeader.set(name, 46);
-      centralParts.push(centralHeader);
-
-      offset += localHeader.length + data.length;
-    }
-
-    const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
-    const end = new Uint8Array(22);
-    const endView = new DataView(end.buffer);
-    endView.setUint32(0, 0x06054b50, true);
-    endView.setUint16(4, 0, true);
-    endView.setUint16(6, 0, true);
-    endView.setUint16(8, files.length, true);
-    endView.setUint16(10, files.length, true);
-    endView.setUint32(12, centralSize, true);
-    endView.setUint32(16, offset, true);
-    endView.setUint16(20, 0, true);
-
-    return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
-  }
-
   function archiveHtml(item) {
     const body = item?.payload?.archive_html || '<p>Scheda non disponibile.</p>';
     return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Collaudo ${String(item.commessa || '')}</title><style>
@@ -157,32 +86,58 @@
     const old = button.textContent;
     button.disabled = true;
     button.textContent = 'Creo ZIP…';
+
     try {
-      const list = await api({ action: 'archive_list', office_code: officeCode, search: commessa, form_type: formType });
-      const exact = (Array.isArray(list.items) ? list.items : []).find(x => String(x.commessa || '').trim().toUpperCase() === commessa.toUpperCase() && x.form_type === formType);
+      const [JSZip, list] = await Promise.all([
+        loadJSZip(),
+        api({ action: 'archive_list', office_code: officeCode, search: commessa, form_type: formType })
+      ]);
+
+      const exact = (Array.isArray(list.items) ? list.items : []).find(x =>
+        String(x.commessa || '').trim().toUpperCase() === commessa.toUpperCase() && x.form_type === formType
+      );
       if (!exact) throw new Error('not_found');
+
       const full = await api({ action: 'archive_get', office_code: officeCode, id: exact.id });
       if (!full.found || !full.item) throw new Error('not_found');
 
       const item = full.item;
       const base = safeName(`Collaudo_${item.commessa}`);
-      const zip = makeZip([
-        { name: `${base}.html`, data: archiveHtml(item) },
-        { name: `${base}_dati.json`, data: JSON.stringify(item, null, 2) },
-        { name: 'LEGGIMI.txt', data: 'Archivio Collaudo PW\n\nApri il file HTML per visualizzare la scheda e, se necessario, stamparla o salvarla in PDF.\nIl file JSON contiene una copia tecnica dei dati archiviati.\n' }
-      ]);
+      const zip = new JSZip();
+      zip.file(`${base}.html`, archiveHtml(item));
+      zip.file(`${base}_dati.json`, JSON.stringify(item, null, 2));
+      zip.file('LEGGIMI.txt', 'Archivio Collaudo PW\r\n\r\nApri il file HTML per visualizzare la scheda e, se necessario, stamparla o salvarla in PDF.\r\nIl file JSON contiene una copia tecnica dei dati archiviati.\r\n');
 
+      const blob = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 },
+        platform: 'DOS',
+        mimeType: 'application/zip'
+      });
+
+      if (!blob || blob.size < 100) throw new Error('zip_empty');
+
+      const href = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(zip);
+      a.href = href;
       a.download = `${base}.zip`;
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      setTimeout(() => {
+        URL.revokeObjectURL(href);
+        a.remove();
+      }, 3000);
+
       button.textContent = 'ZIP scaricato ✓';
       setTimeout(() => button.textContent = old, 1800);
     } catch (err) {
       console.error('Esporta ZIP archivio', err);
-      alert('Non è stato possibile creare lo ZIP. Riprova.');
+      if (String(err?.message || err).includes('jszip')) {
+        alert('Non riesco a caricare il componente ZIP. Controlla la connessione e riprova.');
+      } else {
+        alert('Non è stato possibile creare lo ZIP. Riprova.');
+      }
       button.textContent = old;
     } finally {
       button.disabled = false;
@@ -204,12 +159,12 @@
         actions.appendChild(open);
       }
 
-      const zip = document.createElement('button');
-      zip.type = 'button';
-      zip.className = 'pw-archive-zip';
-      zip.textContent = 'Esporta ZIP';
-      zip.addEventListener('click', () => exportZip(row, zip));
-      actions.appendChild(zip);
+      const zipButton = document.createElement('button');
+      zipButton.type = 'button';
+      zipButton.className = 'pw-archive-zip';
+      zipButton.textContent = 'Esporta ZIP';
+      zipButton.addEventListener('click', () => exportZip(row, zipButton));
+      actions.appendChild(zipButton);
     });
   }
 
