@@ -1,5 +1,6 @@
 (() => {
   const API_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
+  const EXPORT_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-export';
   const OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
 
@@ -69,10 +70,10 @@
       );
       if (!exact) throw new Error('not_found');
 
-      const res = await fetch(API_URL, {
+      const res = await fetch(EXPORT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'archive_zip', office_code: officeCode, id: exact.id })
+        body: JSON.stringify({ office_code: officeCode, id: exact.id })
       });
 
       if (!res.ok) {
