@@ -9,6 +9,11 @@
   archiveScript.async = false;
   document.head.appendChild(archiveScript);
 
+  const archiveCloseFixScript = document.createElement('script');
+  archiveCloseFixScript.src = 'archive-close-fix.js?v=1';
+  archiveCloseFixScript.async = false;
+  document.head.appendChild(archiveCloseFixScript);
+
   const accessScript = document.createElement('script');
   accessScript.src = 'access-session.js?v=1';
   accessScript.async = false;
