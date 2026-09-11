@@ -4,6 +4,11 @@
   mobileStyle.href = 'mobile.css?v=2';
   document.head.appendChild(mobileStyle);
 
+  const archiveScript = document.createElement('script');
+  archiveScript.src = 'archive.js?v=1';
+  archiveScript.async = false;
+  document.head.appendChild(archiveScript);
+
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
   const OLD_OPERATOR = 'APOLLO FRANCESCO';
