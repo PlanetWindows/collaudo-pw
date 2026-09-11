@@ -15,7 +15,7 @@
   document.head.appendChild(accessScript);
 
   const zipScript = document.createElement('script');
-  zipScript.src = 'zip-export.js?v=4';
+  zipScript.src = 'zip-export.js?v=5';
   zipScript.async = false;
   document.head.appendChild(zipScript);
 
