@@ -61,41 +61,76 @@
     return (c ^ 0xFFFFFFFF) >>> 0;
   }
 
-  function u16(n) { return [n & 255, (n >>> 8) & 255]; }
-  function u32(n) { return [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]; }
-
   function makeZip(files) {
     const enc = new TextEncoder();
-    const local = [];
-    const central = [];
+    const localParts = [];
+    const centralParts = [];
     let offset = 0;
+
+    const now = new Date();
+    const year = Math.max(1980, now.getFullYear());
+    const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((Math.floor(now.getSeconds() / 2)) & 31);
+    const dosDate = (((year - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
 
     for (const file of files) {
       const name = enc.encode(file.name);
       const data = file.data instanceof Uint8Array ? file.data : enc.encode(String(file.data ?? ''));
       const crc = crc32(data);
-      const localHeader = new Uint8Array([
-        0x50,0x4b,0x03,0x04, 20,0, 0,0, 0,0, 0,0,0,0,
-        ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), 0,0,
-        ...name
-      ]);
-      local.push(localHeader, data);
 
-      const centralHeader = new Uint8Array([
-        0x50,0x4b,0x01,0x02, 20,0, 20,0, 0,0, 0,0, 0,0,0,0,
-        ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), 0,0, 0,0, 0,0, 0,0,0,0, ...u32(offset),
-        ...name
-      ]);
-      central.push(centralHeader);
+      const localHeader = new Uint8Array(30 + name.length);
+      const localView = new DataView(localHeader.buffer);
+      localView.setUint32(0, 0x04034b50, true);
+      localView.setUint16(4, 20, true);
+      localView.setUint16(6, 0x0800, true);
+      localView.setUint16(8, 0, true);
+      localView.setUint16(10, dosTime, true);
+      localView.setUint16(12, dosDate, true);
+      localView.setUint32(14, crc, true);
+      localView.setUint32(18, data.length, true);
+      localView.setUint32(22, data.length, true);
+      localView.setUint16(26, name.length, true);
+      localView.setUint16(28, 0, true);
+      localHeader.set(name, 30);
+      localParts.push(localHeader, data);
+
+      const centralHeader = new Uint8Array(46 + name.length);
+      const centralView = new DataView(centralHeader.buffer);
+      centralView.setUint32(0, 0x02014b50, true);
+      centralView.setUint16(4, 20, true);
+      centralView.setUint16(6, 20, true);
+      centralView.setUint16(8, 0x0800, true);
+      centralView.setUint16(10, 0, true);
+      centralView.setUint16(12, dosTime, true);
+      centralView.setUint16(14, dosDate, true);
+      centralView.setUint32(16, crc, true);
+      centralView.setUint32(20, data.length, true);
+      centralView.setUint32(24, data.length, true);
+      centralView.setUint16(28, name.length, true);
+      centralView.setUint16(30, 0, true);
+      centralView.setUint16(32, 0, true);
+      centralView.setUint16(34, 0, true);
+      centralView.setUint16(36, 0, true);
+      centralView.setUint32(38, 0, true);
+      centralView.setUint32(42, offset, true);
+      centralHeader.set(name, 46);
+      centralParts.push(centralHeader);
+
       offset += localHeader.length + data.length;
     }
 
-    const centralSize = central.reduce((sum, part) => sum + part.length, 0);
-    const end = new Uint8Array([
-      0x50,0x4b,0x05,0x06, 0,0, 0,0,
-      ...u16(files.length), ...u16(files.length), ...u32(centralSize), ...u32(offset), 0,0
-    ]);
-    return new Blob([...local, ...central, end], { type: 'application/zip' });
+    const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+    const end = new Uint8Array(22);
+    const endView = new DataView(end.buffer);
+    endView.setUint32(0, 0x06054b50, true);
+    endView.setUint16(4, 0, true);
+    endView.setUint16(6, 0, true);
+    endView.setUint16(8, files.length, true);
+    endView.setUint16(10, files.length, true);
+    endView.setUint32(12, centralSize, true);
+    endView.setUint32(16, offset, true);
+    endView.setUint16(20, 0, true);
+
+    return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
   }
 
   function archiveHtml(item) {
