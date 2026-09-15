@@ -2,13 +2,17 @@
   const ROLE_KEY = 'pw-collaudo-role';
   const OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
+  const SYNC_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
   const EXPORT_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-export';
 
   if (String(localStorage.getItem(ROLE_KEY) || '') !== 'office') return;
 
+  let archiveItems = [];
+
   const style = document.createElement('style');
   style.textContent = `
-    .pw-office-export {
+    .pw-office-export,
+    .pw-office-open-pdf {
       border: 1px solid #c7a044 !important;
       background: #c7a044 !important;
       color: #111 !important;
@@ -23,7 +27,8 @@
     }
     @media (max-width: 700px) {
       .pw-archive-row { grid-template-columns: 1fr !important; }
-      .pw-office-export { width: 100%; margin-top: 4px; min-height: 42px; }
+      .pw-office-export,
+      .pw-office-open-pdf { width: 100%; margin-top: 4px; min-height: 42px; }
     }
   `;
   document.head.appendChild(style);
@@ -34,65 +39,148 @@
     return code;
   }
 
+  function normalize(value) {
+    return String(value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  }
+
+  function rowCommessa(row) {
+    const text = row.querySelector('.pw-archive-commessa')?.textContent || '';
+    return text.replace(/^\s*Commessa\s*/i, '').trim();
+  }
+
   function filenameFromDisposition(value) {
     const m = String(value || '').match(/filename="?([^";]+)"?/i);
     return m ? m[1] : 'Collaudo_PW.pdf';
   }
 
-  // Solo Ufficio: anteprima/stampa in Poppins e logo più grande.
-  const nativeOpen = window.open.bind(window);
-  window.open = (...args) => {
-    const child = nativeOpen(...args);
-    if (!child) return child;
+  function applyItemsToRows(items) {
+    archiveItems = Array.isArray(items) ? items : [];
+    const byCommessa = new Map(archiveItems.map(item => [normalize(item?.commessa), item]));
+    document.querySelectorAll('.pw-archive-row').forEach(row => {
+      const item = byCommessa.get(normalize(rowCommessa(row)));
+      if (item?.id) row.dataset.archiveId = String(item.id);
+    });
+  }
 
-    try {
-      const doc = child.document;
-      const nativeWrite = doc.write.bind(doc);
-      doc.write = html => {
-        let out = String(html || '');
-        out = out.replace(
-          '</head>',
-          '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"></head>'
-        );
-        out = out.replace(/font-family:Arial,Helvetica,sans-serif/g, "font-family:'Poppins',Arial,Helvetica,sans-serif");
-        out = out.replace(/grid-template-columns:28mm 1fr 36mm/g, 'grid-template-columns:40mm 1fr 36mm');
-        out = out.replace(/grid-template-columns:28mm 1fr 36mm 36mm/g, 'grid-template-columns:40mm 1fr 36mm 36mm');
-        out = out.replace(/\.logo\{max-width:90px;max-height:45px/g, '.logo{max-width:138px;max-height:54px');
-        return nativeWrite(out);
-      };
-    } catch (_) {}
-
-    return child;
-  };
-
-  async function downloadArchive(id, button) {
+  async function fetchArchiveItems(search = '') {
     const code = officeCode();
-    if (!code) {
-      alert('Codice Ufficio non disponibile. Usa “Cambia accesso” e rientra.');
-      return;
+    if (!code) throw new Error('office_code_missing');
+
+    const res = await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'archive_list',
+        office_code: code,
+        search
+      })
+    });
+
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) throw new Error(data?.error || `archive_list_${res.status}`);
+
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if (!search) applyItemsToRows(items);
+    return items;
+  }
+
+  async function resolveArchiveId(row) {
+    if (row.dataset.archiveId) return row.dataset.archiveId;
+
+    const commessa = rowCommessa(row);
+    const wanted = normalize(commessa);
+
+    const cached = archiveItems.find(item => normalize(item?.commessa) === wanted);
+    if (cached?.id) {
+      row.dataset.archiveId = String(cached.id);
+      return row.dataset.archiveId;
+    }
+
+    const items = await fetchArchiveItems(commessa);
+    const exact = items.find(item => normalize(item?.commessa) === wanted) || items[0];
+    if (!exact?.id) throw new Error('archive_id_not_found');
+
+    row.dataset.archiveId = String(exact.id);
+    return row.dataset.archiveId;
+  }
+
+  async function fetchPdf(id) {
+    const code = officeCode();
+    if (!code) throw new Error('office_code_missing');
+
+    const res = await fetch(EXPORT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'pdf', office_code: code, id })
+    });
+
+    if (!res.ok) {
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (res.status === 401 || data?.error === 'invalid_office_code') throw new Error('invalid_office_code');
+      throw new Error(data?.error || `pdf_${res.status}`);
+    }
+
+    return {
+      blob: await res.blob(),
+      name: filenameFromDisposition(res.headers.get('Content-Disposition'))
+    };
+  }
+
+  async function openPdf(row, button) {
+    const popup = window.open('', '_blank');
+    if (popup) {
+      try {
+        popup.document.title = 'Apertura PDF…';
+        popup.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;padding:24px">Apertura PDF…</div>';
+      } catch (_) {}
     }
 
     const old = button.textContent;
     button.disabled = true;
-    button.textContent = 'ESPORTO…';
+    button.textContent = 'APRO…';
+
     try {
-      const res = await fetch(EXPORT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'export', office_code: code, id })
-      });
-      if (!res.ok) {
-        let data = {};
-        try { data = await res.json(); } catch (_) {}
-        if (res.status === 401 || data?.error === 'invalid_office_code') {
-          alert('Codice Ufficio non valido. Usa “Cambia accesso” e rientra.');
-          return;
-        }
-        throw new Error(data?.error || `export_${res.status}`);
+      const id = await resolveArchiveId(row);
+      const { blob } = await fetchPdf(id);
+      const url = URL.createObjectURL(blob);
+
+      if (popup) {
+        popup.location.href = url;
+      } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }
 
-      const blob = await res.blob();
-      const name = filenameFromDisposition(res.headers.get('Content-Disposition'));
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      if (popup) popup.close();
+      console.error('Apertura PDF archivio', err);
+      if (String(err?.message || err).includes('invalid_office_code')) {
+        alert('Codice Ufficio non valido. Usa “Cambia accesso” e rientra.');
+      } else {
+        alert('Non è stato possibile aprire il PDF. Riprova.');
+      }
+    } finally {
+      button.disabled = false;
+      button.textContent = old;
+    }
+  }
+
+  async function downloadPdf(row, button) {
+    const old = button.textContent;
+    button.disabled = true;
+    button.textContent = 'ESPORTO…';
+
+    try {
+      const id = await resolveArchiveId(row);
+      const { blob, name } = await fetchPdf(id);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -100,10 +188,14 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
     } catch (err) {
-      console.error('Esportazione archivio', err);
-      alert('Non è stato possibile esportare il collaudo sul PC. Riprova.');
+      console.error('Esportazione PDF archivio', err);
+      if (String(err?.message || err).includes('invalid_office_code')) {
+        alert('Codice Ufficio non valido. Usa “Cambia accesso” e rientra.');
+      } else {
+        alert('Non è stato possibile esportare il PDF sul PC. Riprova.');
+      }
     } finally {
       button.disabled = false;
       button.textContent = old;
@@ -112,34 +204,34 @@
 
   function enhanceRows() {
     document.querySelectorAll('.pw-archive-row').forEach(row => {
-      if (row.querySelector('.pw-office-export')) return;
-      const open = row.querySelector('.pw-archive-open');
+      let open = row.querySelector('.pw-archive-open');
       if (!open) return;
 
-      const commessaText = row.querySelector('.pw-archive-commessa')?.textContent || '';
-      const commessa = commessaText.replace(/^\s*Commessa\s*/i, '').trim();
+      if (open.dataset.pwOfficePdf !== '1') {
+        const replacement = open.cloneNode(true);
+        open.replaceWith(replacement);
+        open = replacement;
+        open.dataset.pwOfficePdf = '1';
+        open.classList.add('pw-office-open-pdf');
+        open.textContent = 'APRI PDF';
+        open.title = 'Apri il PDF archiviato';
+        open.addEventListener('click', () => openPdf(row, open));
+      }
 
-      open.textContent = 'APRI PDF';
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'pw-office-export';
-      btn.textContent = 'ESPORTA PDF';
-      btn.title = 'Scarica direttamente il PDF sul computer';
-
-      btn.addEventListener('click', async () => {
-        const id = row.dataset.archiveId;
-        if (id) {
-          await downloadArchive(id, btn);
-          return;
-        }
-        alert(`Per la commessa ${commessa || ''}, chiudi e riapri l'archivio e riprova.`);
-      });
-      open.insertAdjacentElement('afterend', btn);
+      if (!row.querySelector('.pw-office-export')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pw-office-export';
+        btn.textContent = 'ESPORTA PDF';
+        btn.title = 'Scarica direttamente il PDF sul computer';
+        btn.addEventListener('click', () => downloadPdf(row, btn));
+        open.insertAdjacentElement('afterend', btn);
+      }
     });
+
+    if (archiveItems.length) applyItemsToRows(archiveItems);
   }
 
-  // Intercetta la sola lista Ufficio per associare l'id tecnico a ciascuna riga.
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (...args) => {
     const res = await originalFetch(...args);
@@ -151,10 +243,7 @@
         const data = await clone.json();
         const items = Array.isArray(data?.items) ? data.items : [];
         setTimeout(() => {
-          const rows = [...document.querySelectorAll('.pw-archive-row')];
-          rows.forEach((row, i) => {
-            if (items[i]?.id) row.dataset.archiveId = String(items[i].id);
-          });
+          applyItemsToRows(items);
           enhanceRows();
         }, 0);
       }
