@@ -1,5 +1,6 @@
 (() => {
   const ROLE_KEY = 'pw-collaudo-role';
+  const DEPT_CODE_KEY = 'pw-collaudo-access-code';
   const OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
   const SYNC_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
@@ -11,6 +12,8 @@
 
   const style = document.createElement('style');
   style.textContent = `
+    .pw-archive-overlay[hidden] { display: none !important; }
+
     .pw-office-export,
     .pw-office-open-pdf {
       border: 1px solid #c7a044 !important;
@@ -22,13 +25,69 @@
       cursor: pointer !important;
       white-space: nowrap !important;
     }
-    .pw-archive-row {
-      grid-template-columns: minmax(160px, 1fr) minmax(150px, .8fr) minmax(150px, .8fr) auto auto !important;
+
+    .pw-office-delete {
+      width: 40px !important;
+      min-width: 40px !important;
+      height: 38px !important;
+      border: 1px solid #b42318 !important;
+      background: #fff !important;
+      color: #b42318 !important;
+      border-radius: 8px !important;
+      font-size: 18px !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
     }
+
+    .pw-office-delete:hover {
+      background: #fff3f2 !important;
+    }
+
+    .pw-archive-row {
+      grid-template-columns: minmax(160px, 1fr) minmax(150px, .8fr) minmax(150px, .8fr) auto auto auto !important;
+    }
+
+    .pw-office-head-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pw-office-close-archive,
+    .pw-office-switch-access {
+      border: 0 !important;
+      border-radius: 8px !important;
+      padding: 9px 12px !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      white-space: nowrap !important;
+    }
+
+    .pw-office-close-archive {
+      background: #fff !important;
+      color: #111 !important;
+    }
+
+    .pw-office-switch-access {
+      background: #c7a044 !important;
+      color: #111 !important;
+    }
+
     @media (max-width: 700px) {
       .pw-archive-row { grid-template-columns: 1fr !important; }
       .pw-office-export,
       .pw-office-open-pdf { width: 100%; margin-top: 4px; min-height: 42px; }
+      .pw-office-delete { width: 100% !important; min-width: 100% !important; height: 42px !important; margin-top: 4px; }
+      .pw-archive-head { align-items: flex-start !important; }
+      .pw-office-head-actions { width: 100%; }
+      .pw-office-close-archive,
+      .pw-office-switch-access { flex: 1 1 auto; }
     }
   `;
   document.head.appendChild(style);
@@ -53,6 +112,51 @@
     return m ? m[1] : 'Collaudo_PW.pdf';
   }
 
+  function changeAccess() {
+    if (!confirm('Vuoi uscire dall’area Ufficio e inserire un altro codice di accesso?')) return;
+    localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(DEPT_CODE_KEY);
+    localStorage.removeItem(OFFICE_LOCAL_KEY);
+    sessionStorage.removeItem(OFFICE_SESSION_KEY);
+    location.reload();
+  }
+
+  function enhanceArchiveHeader() {
+    const overlay = document.querySelector('.pw-archive-overlay');
+    const head = overlay?.querySelector('.pw-archive-head');
+    if (!overlay || !head) return;
+
+    let actions = head.querySelector('.pw-office-head-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'pw-office-head-actions';
+
+      const oldClose = head.querySelector('.pw-archive-close');
+      if (oldClose) {
+        oldClose.textContent = 'Chiudi archivio';
+        oldClose.classList.add('pw-office-close-archive');
+        oldClose.addEventListener('click', () => { overlay.hidden = true; });
+        actions.appendChild(oldClose);
+      } else {
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'pw-office-close-archive';
+        close.textContent = 'Chiudi archivio';
+        close.addEventListener('click', () => { overlay.hidden = true; });
+        actions.appendChild(close);
+      }
+
+      const change = document.createElement('button');
+      change.type = 'button';
+      change.className = 'pw-office-switch-access';
+      change.textContent = 'Cambia accesso';
+      change.addEventListener('click', changeAccess);
+      actions.appendChild(change);
+
+      head.appendChild(actions);
+    }
+  }
+
   function applyItemsToRows(items) {
     archiveItems = Array.isArray(items) ? items : [];
     const byCommessa = new Map(archiveItems.map(item => [normalize(item?.commessa), item]));
@@ -69,11 +173,7 @@
     const res = await fetch(SYNC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'archive_list',
-        office_code: code,
-        search
-      })
+      body: JSON.stringify({ action: 'archive_list', office_code: code, search })
     });
 
     let data = {};
@@ -202,7 +302,54 @@
     }
   }
 
+  async function deleteArchive(row, button) {
+    const commessa = rowCommessa(row) || 'questa commessa';
+    if (!confirm(`Vuoi eliminare definitivamente la commessa ${commessa} dall’archivio collaudi?`)) return;
+
+    const old = button.textContent;
+    button.disabled = true;
+    button.textContent = '…';
+
+    try {
+      const id = await resolveArchiveId(row);
+      const code = officeCode();
+      if (!code) throw new Error('office_code_missing');
+
+      const res = await fetch(SYNC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive_delete', office_code: code, id })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) {
+        if (res.status === 401 || data?.error === 'invalid_office_code') throw new Error('invalid_office_code');
+        throw new Error(data?.error || `archive_delete_${res.status}`);
+      }
+
+      archiveItems = archiveItems.filter(item => String(item?.id || '') !== String(id));
+      row.remove();
+
+      const list = document.querySelector('.pw-archive-list');
+      if (list && !list.querySelector('.pw-archive-row')) {
+        list.innerHTML = '<div class="pw-archive-empty">Nessun collaudo archiviato.</div>';
+      }
+    } catch (err) {
+      console.error('Eliminazione archivio', err);
+      if (String(err?.message || err).includes('invalid_office_code')) {
+        alert('Codice Ufficio non valido. Usa “Cambia accesso” e rientra.');
+      } else {
+        alert('Non è stato possibile eliminare il collaudo. Riprova.');
+      }
+      button.disabled = false;
+      button.textContent = old;
+    }
+  }
+
   function enhanceRows() {
+    enhanceArchiveHeader();
+
     document.querySelectorAll('.pw-archive-row').forEach(row => {
       let open = row.querySelector('.pw-archive-open');
       if (!open) return;
@@ -218,14 +365,26 @@
         open.addEventListener('click', () => openPdf(row, open));
       }
 
-      if (!row.querySelector('.pw-office-export')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'pw-office-export';
-        btn.textContent = 'ESPORTA PDF';
-        btn.title = 'Scarica direttamente il PDF sul computer';
-        btn.addEventListener('click', () => downloadPdf(row, btn));
-        open.insertAdjacentElement('afterend', btn);
+      let exportBtn = row.querySelector('.pw-office-export');
+      if (!exportBtn) {
+        exportBtn = document.createElement('button');
+        exportBtn.type = 'button';
+        exportBtn.className = 'pw-office-export';
+        exportBtn.textContent = 'ESPORTA PDF';
+        exportBtn.title = 'Scarica direttamente il PDF sul computer';
+        exportBtn.addEventListener('click', () => downloadPdf(row, exportBtn));
+        open.insertAdjacentElement('afterend', exportBtn);
+      }
+
+      if (!row.querySelector('.pw-office-delete')) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'pw-office-delete';
+        deleteBtn.textContent = '🗑';
+        deleteBtn.title = 'Elimina questa commessa dall’archivio';
+        deleteBtn.setAttribute('aria-label', 'Elimina questa commessa dall’archivio');
+        deleteBtn.addEventListener('click', () => deleteArchive(row, deleteBtn));
+        exportBtn.insertAdjacentElement('afterend', deleteBtn);
       }
     });
 
@@ -250,6 +409,12 @@
     } catch (_) {}
     return res;
   };
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const overlay = document.querySelector('.pw-archive-overlay:not([hidden])');
+    if (overlay) overlay.hidden = true;
+  });
 
   const observer = new MutationObserver(enhanceRows);
   observer.observe(document.body, { childList: true, subtree: true });
