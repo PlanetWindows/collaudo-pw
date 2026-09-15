@@ -39,7 +39,7 @@
     return m ? m[1] : 'Collaudo_PW.pdf';
   }
 
-  // Solo Ufficio: quando si apre l'anteprima, forza Poppins e rende il logo più leggibile.
+  // Solo Ufficio: anteprima/stampa in Poppins e logo più grande.
   const nativeOpen = window.open.bind(window);
   window.open = (...args) => {
     const child = nativeOpen(...args);
@@ -55,7 +55,9 @@
           '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"></head>'
         );
         out = out.replace(/font-family:Arial,Helvetica,sans-serif/g, "font-family:'Poppins',Arial,Helvetica,sans-serif");
-        out = out.replace(/\.logo\{max-width:90px;max-height:45px/g, '.logo{max-width:145px;max-height:54px');
+        out = out.replace(/grid-template-columns:28mm 1fr 36mm/g, 'grid-template-columns:40mm 1fr 36mm');
+        out = out.replace(/grid-template-columns:28mm 1fr 36mm 36mm/g, 'grid-template-columns:40mm 1fr 36mm 36mm');
+        out = out.replace(/\.logo\{max-width:90px;max-height:45px/g, '.logo{max-width:138px;max-height:54px');
         return nativeWrite(out);
       };
     } catch (_) {}
