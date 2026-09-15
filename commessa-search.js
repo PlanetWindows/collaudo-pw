@@ -13,11 +13,13 @@
     }
   }
 
-  function getAccessCode() {
-    let code = String(localStorage.getItem(CODE_KEY) || '').trim();
-    if (code) return code;
+  function getAccessCode(forcePrompt = false) {
+    if (!forcePrompt) {
+      const saved = String(localStorage.getItem(CODE_KEY) || '').trim();
+      if (saved) return saved;
+    }
 
-    code = String(prompt('Inserisci il codice reparto Collaudo PW:') || '')
+    const code = String(prompt('Inserisci il codice reparto Collaudo PW:') || '')
       .trim()
       .toUpperCase();
 
@@ -65,9 +67,25 @@
     });
 
     document.querySelectorAll('img[data-signature]').forEach(img => {
-      const key = img.dataset.signature;
-      setSignature(key, signatures[key] || '');
+      setSignature(img.dataset.signature, signatures[img.dataset.signature] || '');
     });
+  }
+
+  async function requestShared(type, commessa, code) {
+    const res = await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'load',
+        code,
+        form_type: type,
+        commessa
+      })
+    });
+
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    return { res, data };
   }
 
   async function searchSharedCommessa(button) {
@@ -82,56 +100,44 @@
       return;
     }
 
-    const code = getAccessCode();
-    if (!code) return;
-
     const oldText = button.textContent;
     button.disabled = true;
     button.textContent = 'CERCO…';
-    setStatus('Cerco la commessa condivisa…', 0);
+    setStatus('Cerco la bozza condivisa…', 0);
 
     try {
-      const res = await fetch(SYNC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'load',
-          code,
-          form_type: type,
-          commessa
-        })
-      });
+      let code = getAccessCode(false);
+      if (!code) return;
 
-      let data = {};
-      try { data = await res.json(); } catch (_) {}
+      let { res, data } = await requestShared(type, commessa, code);
 
       if (res.status === 401 && data?.error === 'invalid_code') {
         localStorage.removeItem(CODE_KEY);
-        setStatus('Codice reparto non corretto', 3000);
-        alert('Codice reparto non corretto. Inserisci il nuovo codice operatori e riprova.');
-        return;
+        code = getAccessCode(true);
+        if (!code) return;
+        ({ res, data } = await requestShared(type, commessa, code));
       }
 
       if (!res.ok) throw new Error(data?.error || `search_${res.status}`);
 
       if (!data?.found) {
-        setStatus('Commessa non trovata', 3500);
-        alert(`La commessa “${commessa}” non risulta ancora salvata online per questo tipo di scheda.`);
+        setStatus('Bozza della commessa non trovata', 3500);
+        alert(`La commessa “${commessa}” non risulta ancora salvata come bozza condivisa per questo tipo di scheda.`);
         return;
       }
 
       const payload = data.payload || {};
       applyPayload(payload);
       localStorage.setItem(`pw-collaudo-${type}`, JSON.stringify(payload));
-      setStatus('Commessa trovata: lavoro del collega caricato', 4000);
+      setStatus('Bozza trovata — puoi continuare il lavoro del collega', 4500);
 
       setTimeout(() => {
         if (window.PWCollaudoSync?.reload) window.PWCollaudoSync.reload();
       }, 150);
     } catch (err) {
-      console.error('Ricerca commessa condivisa', err);
-      setStatus('Errore durante la ricerca della commessa', 3500);
-      alert('Non sono riuscito a cercare la commessa. Controlla la connessione e riprova.');
+      console.error('Ricerca bozza condivisa', err);
+      setStatus('Errore durante la ricerca della bozza', 3500);
+      alert('Non sono riuscito a cercare la bozza. Controlla la connessione e riprova.');
     } finally {
       button.disabled = false;
       button.textContent = oldText;
@@ -152,7 +158,7 @@
     button.type = 'button';
     button.className = 'pw-commessa-search-btn';
     button.textContent = 'CERCA';
-    button.title = 'Cerca e carica la commessa condivisa già compilata da un collega';
+    button.title = 'Cerca e carica la bozza condivisa già iniziata da un collega';
     button.addEventListener('click', () => searchSharedCommessa(button));
     cell.appendChild(button);
 
@@ -184,9 +190,6 @@
       font-weight: 700 !important;
     }
     @media (max-width: 700px) {
-      .pw-commessa-search-cell {
-        grid-template-columns: minmax(0, 1fr) auto !important;
-      }
       .pw-commessa-search-btn {
         min-height: 38px;
         padding: 7px 9px !important;
@@ -208,4 +211,12 @@
 
   const observer = new MutationObserver(installSearchButton);
   observer.observe(document.body, { childList: true, subtree: true });
+
+  if (!document.querySelector('script[data-pw-draft-chain]')) {
+    const chain = document.createElement('script');
+    chain.src = 'draft-chain.js?v=1';
+    chain.async = false;
+    chain.dataset.pwDraftChain = '1';
+    document.head.appendChild(chain);
+  }
 })();
