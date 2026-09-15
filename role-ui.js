@@ -64,7 +64,7 @@
   function loadOfficeExport() {
     if (role !== 'office' || document.querySelector('script[data-pw-office-export]')) return;
     const script = document.createElement('script');
-    script.src = 'office-export.js?v=2';
+    script.src = 'office-export.js?v=3';
     script.async = false;
     script.dataset.pwOfficeExport = '1';
     script.onload = () => {
