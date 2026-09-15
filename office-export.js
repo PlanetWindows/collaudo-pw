@@ -36,8 +36,32 @@
 
   function filenameFromDisposition(value) {
     const m = String(value || '').match(/filename="?([^";]+)"?/i);
-    return m ? m[1] : 'Collaudo_PW.zip';
+    return m ? m[1] : 'Collaudo_PW.pdf';
   }
+
+  // Solo Ufficio: quando si apre l'anteprima, forza Poppins e rende il logo più leggibile.
+  const nativeOpen = window.open.bind(window);
+  window.open = (...args) => {
+    const child = nativeOpen(...args);
+    if (!child) return child;
+
+    try {
+      const doc = child.document;
+      const nativeWrite = doc.write.bind(doc);
+      doc.write = html => {
+        let out = String(html || '');
+        out = out.replace(
+          '</head>',
+          '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"></head>'
+        );
+        out = out.replace(/font-family:Arial,Helvetica,sans-serif/g, "font-family:'Poppins',Arial,Helvetica,sans-serif");
+        out = out.replace(/\.logo\{max-width:90px;max-height:45px/g, '.logo{max-width:145px;max-height:54px');
+        return nativeWrite(out);
+      };
+    } catch (_) {}
+
+    return child;
+  };
 
   async function downloadArchive(id, button) {
     const code = officeCode();
@@ -93,27 +117,27 @@
       const commessaText = row.querySelector('.pw-archive-commessa')?.textContent || '';
       const commessa = commessaText.replace(/^\s*Commessa\s*/i, '').trim();
 
+      open.textContent = 'APRI PDF';
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'pw-office-export';
-      btn.textContent = 'ESPORTA SUL PC';
-      btn.title = 'Scarica il collaudo in PDF sul computer';
+      btn.textContent = 'ESPORTA PDF';
+      btn.title = 'Scarica direttamente il PDF sul computer';
 
-      // Recupera l'id già associato alla riga intercettando la chiamata usata da "Apri".
-      // Se non è disponibile, usa il bottone Apri una sola volta per ottenere l'item e poi esporta.
       btn.addEventListener('click', async () => {
         const id = row.dataset.archiveId;
         if (id) {
           await downloadArchive(id, btn);
           return;
         }
-        alert(`Per la commessa ${commessa || ''}, aggiorna l'archivio una volta e riprova l'esportazione.`);
+        alert(`Per la commessa ${commessa || ''}, chiudi e riapri l'archivio e riprova.`);
       });
       open.insertAdjacentElement('afterend', btn);
     });
   }
 
-  // Intercetta le risposte dell'archivio per associare l'id alle righe senza modificare archive.js.
+  // Intercetta la sola lista Ufficio per associare l'id tecnico a ciascuna riga.
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (...args) => {
     const res = await originalFetch(...args);
