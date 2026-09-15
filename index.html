@@ -3,62 +3,206 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Schede Collaudo Digitali - Planet Windows</title>
+<title>PW Collaudo - Planet Windows</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
-<style>html,body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}.loading{padding:24px;color:#555}</style>
+<style>
+  html,body{margin:0;min-height:100%;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;color:#111}
+  .loading{padding:24px;color:#555}
+  .access-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+  .access-card{width:min(430px,100%);background:#fff;border-radius:16px;box-shadow:0 18px 55px rgba(0,0,0,.14);padding:28px;box-sizing:border-box}
+  .access-brand{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b6c1e;margin-bottom:8px}
+  .access-card h1{font-size:26px;margin:0 0 8px}
+  .access-card p{margin:0 0 20px;color:#666;line-height:1.45;font-size:14px}
+  .access-card label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
+  .access-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .access-row input{min-width:0;border:1px solid #bbb;border-radius:9px;padding:12px 13px;font-size:15px;text-transform:uppercase}
+  .access-row button{border:1px solid #c7a044;background:#c7a044;color:#111;border-radius:9px;padding:11px 18px;font-weight:700;cursor:pointer}
+  .access-error{min-height:20px;margin-top:10px;color:#a31818;font-size:12px}
+  .access-note{margin-top:18px!important;font-size:12px!important;color:#888!important}
+  @media(max-width:520px){.access-row{grid-template-columns:1fr}.access-row button{min-height:44px}.access-card{padding:22px}}
+</style>
 </head>
 <body>
-<div class="loading">Caricamento scheda…</div>
+<div id="boot" class="loading">Caricamento PW Collaudo…</div>
 <script>
-(async function () {
-  function replaceOnce(source, oldText, newText, label) {
-    if (!source.includes(oldText)) throw new Error('Blocco non trovato: ' + label);
-    return source.replace(oldText, newText);
+const ACCESS_API = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
+const ROLE_KEY = 'pw-collaudo-role';
+const DEPT_CODE_KEY = 'pw-collaudo-access-code';
+const OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
+const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
+
+function replaceOnce(source, oldText, newText, label) {
+  if (!source.includes(oldText)) throw new Error('Blocco non trovato: ' + label);
+  return source.replace(oldText, newText);
+}
+
+function clearAccess() {
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(DEPT_CODE_KEY);
+  localStorage.removeItem(OFFICE_LOCAL_KEY);
+  sessionStorage.removeItem(OFFICE_SESSION_KEY);
+}
+
+function storedCodeForRole(role) {
+  if (role === 'production') return String(localStorage.getItem(DEPT_CODE_KEY) || '').trim();
+  if (role === 'office') return String(localStorage.getItem(OFFICE_LOCAL_KEY) || '').trim();
+  return '';
+}
+
+function saveAccess(role, code) {
+  clearAccess();
+  localStorage.setItem(ROLE_KEY, role);
+  if (role === 'production') {
+    localStorage.setItem(DEPT_CODE_KEY, code);
+  } else if (role === 'office') {
+    localStorage.setItem(OFFICE_LOCAL_KEY, code);
+    sessionStorage.setItem(OFFICE_SESSION_KEY, code);
   }
+}
 
-  try {
-    let s = await fetch('app-core.html', {cache:'no-store'}).then(r => {
-      if (!r.ok) throw new Error('Impossibile caricare la scheda base');
-      return r.text();
-    });
+async function validateAccess(code) {
+  const res = await fetch(ACCESS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'access_check', access_code: code })
+  });
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  if (res.status === 401) return { ok:false, invalid:true };
+  if (!res.ok) throw new Error(data.error || `access_${res.status}`);
+  return { ok:true, role:data.role || '' };
+}
 
-    s = replaceOnce(s, `.signature-pad{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  touch-action:none;\n  cursor:crosshair;\n  display:block;\n}`, `.signature-preview{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  display:flex;\n  align-items:center;\n  justify-content:center;\n  overflow:hidden;\n  padding:4px;\n}\n.signature-image{\n  max-width:100%;\n  max-height:100%;\n  width:auto;\n  height:auto;\n  object-fit:contain;\n  display:none;\n}\n.signature-empty{\n  font-size:12px;\n  color:#888;\n  text-align:center;\n}`, 'stile firma');
+function showAccess() {
+  const root = document.getElementById('boot');
+  root.className = '';
+  root.innerHTML = `
+    <div class="access-wrap">
+      <div class="access-card">
+        <div class="access-brand">Planet Windows</div>
+        <h1>PW Collaudo</h1>
+        <p>Inserisci il codice di accesso. Il sistema aprirà automaticamente l'area Produzione oppure l'area Ufficio.</p>
+        <label for="pwAccessCode">Codice di accesso</label>
+        <div class="access-row">
+          <input id="pwAccessCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Inserisci codice">
+          <button id="pwAccessBtn" type="button">Accedi</button>
+        </div>
+        <div id="pwAccessError" class="access-error"></div>
+        <p class="access-note">Il codice resta memorizzato su questo PC finché non scegli “Cambia accesso”.</p>
+      </div>
+    </div>`;
 
-    s = replaceOnce(s, `  .signature-pad{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n  }`, `  .signature-preview{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n    padding:0!important;\n  }\n  .signature-image{\n    max-width:100%!important;\n    max-height:100%!important;\n    width:auto!important;\n    height:auto!important;\n    object-fit:contain!important;\n  }\n  .signature-empty{\n    display:none!important;\n  }`, 'stile stampa firma');
+  const input = document.getElementById('pwAccessCode');
+  const button = document.getElementById('pwAccessBtn');
+  const error = document.getElementById('pwAccessError');
 
-    s = replaceOnce(s, `            <label>Firma Operatore</label>\n            <div class="signature-wrap">\n              <canvas class="signature-pad" data-signature="phase_sign_\${i}" aria-label="Firma operatore"></canvas>\n              <div class="signature-actions">\n                <button type="button" onclick="clearSignature('phase_sign_\${i}')">Cancella firma</button>\n                <span class="signature-placeholder">Firma con dito, penna touch o mouse</span>\n              </div>\n            </div>`, `            <label>Firma Operatore</label>\n            <div class="signature-wrap">\n              <div class="signature-preview">\n                <img class="signature-image" data-signature="phase_sign_\${i}" alt="Firma operatore">\n                <span class="signature-empty" data-signature-placeholder="phase_sign_\${i}">Nessuna firma allegata</span>\n              </div>\n              <input type="file" data-signature-input="phase_sign_\${i}" accept="image/png,image/jpeg,image/webp" hidden onchange="loadSignatureFile('phase_sign_\${i}', this)">\n              <div class="signature-actions">\n                <button type="button" onclick="chooseSignature('phase_sign_\${i}')">Allega / cambia firma</button>\n                <button type="button" onclick="clearSignature('phase_sign_\${i}')">Rimuovi firma</button>\n                <span class="signature-placeholder">PNG, JPG o WEBP</span>\n              </div>\n            </div>`, 'controlli firma');
-
-    s = replaceOnce(s, `  initSignaturePads();\n  restoreDraft();`, `  restoreDraft();`, 'inizializzazione firma');
-
-    s = replaceOnce(s, `  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    data.signatures[canvas.dataset.signature] = canvas.dataset.hasInk === '1'\n      ? canvas.toDataURL('image/png')\n      : '';\n  });`, `  document.querySelectorAll('img[data-signature]').forEach(img => {\n    data.signatures[img.dataset.signature] = img.dataset.hasSignature === '1'\n      ? img.src\n      : '';\n  });`, 'salvataggio firma');
-
-    s = replaceOnce(s, `  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    const saved = data.signatures && data.signatures[canvas.dataset.signature];\n    if (saved) {\n      drawSavedSignature(canvas, saved);\n    }\n  });`, `  document.querySelectorAll('img[data-signature]').forEach(img => {\n    const saved = data.signatures && data.signatures[img.dataset.signature];\n    setSignatureImage(img.dataset.signature, saved || '');\n  });`, 'ripristino firma');
-
-    const oldStart = s.indexOf('function setupCanvasSize(canvas) {');
-    const oldEnd = s.indexOf('\n\nfunction saveDraft(show=true) {', oldStart);
-    if (oldStart < 0 || oldEnd < 0) throw new Error('Blocco funzioni firma non trovato');
-
-    const newSignatureJs = `function setSignatureImage(key, dataUrl) {\n  const img = document.querySelector(\`img[data-signature="\${key}\"]\`);\n  const empty = document.querySelector(\`[data-signature-placeholder="\${key}\"]\`);\n  if (!img) return;\n\n  if (dataUrl) {\n    img.src = dataUrl;\n    img.dataset.hasSignature = '1';\n    img.style.display = 'block';\n    if (empty) empty.style.display = 'none';\n  } else {\n    img.removeAttribute('src');\n    img.dataset.hasSignature = '0';\n    img.style.display = 'none';\n    if (empty) empty.style.display = '';\n  }\n}\n\nfunction chooseSignature(key) {\n  const input = document.querySelector(\`input[data-signature-input="\${key}\"]\`);\n  if (!input) return;\n  input.value = '';\n  input.click();\n}\n\nfunction normalizeSignatureImage(dataUrl) {\n  return new Promise((resolve, reject) => {\n    const img = new Image();\n    img.onload = () => {\n      const maxW = 900;\n      const maxH = 300;\n      const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);\n      const canvas = document.createElement('canvas');\n      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));\n      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));\n      const ctx = canvas.getContext('2d');\n      ctx.clearRect(0, 0, canvas.width, canvas.height);\n      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);\n      resolve(canvas.toDataURL('image/png'));\n    };\n    img.onerror = reject;\n    img.src = dataUrl;\n  });\n}\n\nfunction loadSignatureFile(key, input) {\n  const file = input.files && input.files[0];\n  if (!file) return;\n\n  const allowed = ['image/png', 'image/jpeg', 'image/webp'];\n  if (!allowed.includes(file.type)) {\n    alert('Seleziona una firma in formato PNG, JPG o WEBP.');\n    input.value = '';\n    return;\n  }\n\n  const reader = new FileReader();\n  reader.onload = async () => {\n    try {\n      const dataUrl = await normalizeSignatureImage(reader.result);\n      setSignatureImage(key, dataUrl);\n      autoSave();\n      statusEl.textContent = 'Firma allegata';\n      setTimeout(() => statusEl.textContent = '', 1800);\n    } catch (e) {\n      alert('Non è stato possibile leggere il file della firma.');\n    }\n  };\n  reader.onerror = () => alert('Non è stato possibile leggere il file della firma.');\n  reader.readAsDataURL(file);\n}\n\nfunction clearSignature(key) {\n  setSignatureImage(key, '');\n  const input = document.querySelector(\`input[data-signature-input="\${key}\"]\`);\n  if (input) input.value = '';\n  autoSave();\n}`;
-
-    s = s.slice(0, oldStart) + newSignatureJs + s.slice(oldEnd);
-
-    s = replaceOnce(s, `if (!confirm('Vuoi cancellare tutti i dati di questa scheda e iniziarne una nuova?')) return;`, `if (!confirm('Creare una nuova scheda? Tutti i dati attualmente compilati verranno azzerati. Assicurati di aver salvato la bozza prima di continuare.')) return;`, 'conferma nuova scheda');
-
-    if (!s.includes('Allega / cambia firma') || s.includes('Firma con dito, penna touch o mouse') || s.includes('initSignaturePads')) {
-      throw new Error('Verifica finale modifica firma non superata');
+  async function submit() {
+    const code = String(input.value || '').trim().toUpperCase();
+    if (!code) {
+      error.textContent = 'Inserisci il codice di accesso.';
+      input.focus();
+      return;
     }
 
-    s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
-    s = s.replace('</body>', '<script src="sync.js?v=9"><' + '/script><script src="commessa-search.js?v=2"><' + '/script><script src="operator-fix.js?v=3"><' + '/script><script src="signature-ui.js?v=3"><' + '/script><script src="signature-phone.js?v=1"><' + '/script>\n</body>');
+    button.disabled = true;
+    button.textContent = 'Verifica…';
+    error.textContent = '';
 
-    document.open();
-    document.write(s);
-    document.close();
-  } catch (err) {
-    console.error(err);
-    document.body.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif"><b>Impossibile caricare la scheda.</b><br>Ricarica la pagina.</div>';
+    try {
+      const result = await validateAccess(code);
+      if (!result.ok || !['production','office'].includes(result.role)) {
+        error.textContent = 'Codice non valido.';
+        input.select();
+        return;
+      }
+      saveAccess(result.role, code);
+      await loadApp(result.role);
+    } catch (err) {
+      console.error(err);
+      error.textContent = 'Connessione non disponibile. Riprova.';
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Accedi';
+    }
   }
-})();
+
+  button.addEventListener('click', submit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submit();
+  });
+  input.focus();
+}
+
+async function loadApp(role) {
+  let s = await fetch('app-core.html', {cache:'no-store'}).then(r => {
+    if (!r.ok) throw new Error('Impossibile caricare la scheda base');
+    return r.text();
+  });
+
+  s = replaceOnce(s, `.signature-pad{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  touch-action:none;\n  cursor:crosshair;\n  display:block;\n}`, `.signature-preview{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  display:flex;\n  align-items:center;\n  justify-content:center;\n  overflow:hidden;\n  padding:4px;\n}\n.signature-image{\n  max-width:100%;\n  max-height:100%;\n  width:auto;\n  height:auto;\n  object-fit:contain;\n  display:none;\n}\n.signature-empty{\n  font-size:12px;\n  color:#888;\n  text-align:center;\n}`, 'stile firma');
+
+  s = replaceOnce(s, `  .signature-pad{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n  }`, `  .signature-preview{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n    padding:0!important;\n  }\n  .signature-image{\n    max-width:100%!important;\n    max-height:100%!important;\n    width:auto!important;\n    height:auto!important;\n    object-fit:contain!important;\n  }\n  .signature-empty{\n    display:none!important;\n  }`, 'stile stampa firma');
+
+  s = replaceOnce(s, `            <label>Firma Operatore</label>\n            <div class="signature-wrap">\n              <canvas class="signature-pad" data-signature="phase_sign_\${i}" aria-label="Firma operatore"></canvas>\n              <div class="signature-actions">\n                <button type="button" onclick="clearSignature('phase_sign_\${i}')">Cancella firma</button>\n                <span class="signature-placeholder">Firma con dito, penna touch o mouse</span>\n              </div>\n            </div>`, `            <label>Firma Operatore</label>\n            <div class="signature-wrap">\n              <div class="signature-preview">\n                <img class="signature-image" data-signature="phase_sign_\${i}" alt="Firma operatore">\n                <span class="signature-empty" data-signature-placeholder="phase_sign_\${i}">Nessuna firma allegata</span>\n              </div>\n              <input type="file" data-signature-input="phase_sign_\${i}" accept="image/png,image/jpeg,image/webp" hidden onchange="loadSignatureFile('phase_sign_\${i}', this)">\n              <div class="signature-actions">\n                <button type="button" onclick="chooseSignature('phase_sign_\${i}')">Allega / cambia firma</button>\n                <button type="button" onclick="clearSignature('phase_sign_\${i}')">Rimuovi firma</button>\n                <span class="signature-placeholder">PNG, JPG o WEBP</span>\n              </div>\n            </div>`, 'controlli firma');
+
+  s = replaceOnce(s, `  initSignaturePads();\n  restoreDraft();`, `  restoreDraft();`, 'inizializzazione firma');
+
+  s = replaceOnce(s, `  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    data.signatures[canvas.dataset.signature] = canvas.dataset.hasInk === '1'\n      ? canvas.toDataURL('image/png')\n      : '';\n  });`, `  document.querySelectorAll('img[data-signature]').forEach(img => {\n    data.signatures[img.dataset.signature] = img.dataset.hasSignature === '1'\n      ? img.src\n      : '';\n  });`, 'salvataggio firma');
+
+  s = replaceOnce(s, `  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    const saved = data.signatures && data.signatures[canvas.dataset.signature];\n    if (saved) {\n      drawSavedSignature(canvas, saved);\n    }\n  });`, `  document.querySelectorAll('img[data-signature]').forEach(img => {\n    const saved = data.signatures && data.signatures[img.dataset.signature];\n    setSignatureImage(img.dataset.signature, saved || '');\n  });`, 'ripristino firma');
+
+  const oldStart = s.indexOf('function setupCanvasSize(canvas) {');
+  const oldEnd = s.indexOf('\n\nfunction saveDraft(show=true) {', oldStart);
+  if (oldStart < 0 || oldEnd < 0) throw new Error('Blocco funzioni firma non trovato');
+
+  const newSignatureJs = `function setSignatureImage(key, dataUrl) {\n  const img = document.querySelector(\`img[data-signature="\${key}\"]\`);\n  const empty = document.querySelector(\`[data-signature-placeholder="\${key}\"]\`);\n  if (!img) return;\n\n  if (dataUrl) {\n    img.src = dataUrl;\n    img.dataset.hasSignature = '1';\n    img.style.display = 'block';\n    if (empty) empty.style.display = 'none';\n  } else {\n    img.removeAttribute('src');\n    img.dataset.hasSignature = '0';\n    img.style.display = 'none';\n    if (empty) empty.style.display = '';\n  }\n}\n\nfunction chooseSignature(key) {\n  const input = document.querySelector(\`input[data-signature-input="\${key}\"]\`);\n  if (!input) return;\n  input.value = '';\n  input.click();\n}\n\nfunction normalizeSignatureImage(dataUrl) {\n  return new Promise((resolve, reject) => {\n    const img = new Image();\n    img.onload = () => {\n      const maxW = 900;\n      const maxH = 300;\n      const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);\n      const canvas = document.createElement('canvas');\n      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));\n      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));\n      const ctx = canvas.getContext('2d');\n      ctx.clearRect(0, 0, canvas.width, canvas.height);\n      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);\n      resolve(canvas.toDataURL('image/png'));\n    };\n    img.onerror = reject;\n    img.src = dataUrl;\n  });\n}\n\nfunction loadSignatureFile(key, input) {\n  const file = input.files && input.files[0];\n  if (!file) return;\n\n  const allowed = ['image/png', 'image/jpeg', 'image/webp'];\n  if (!allowed.includes(file.type)) {\n    alert('Seleziona una firma in formato PNG, JPG o WEBP.');\n    input.value = '';\n    return;\n  }\n\n  const reader = new FileReader();\n  reader.onload = async () => {\n    try {\n      const dataUrl = await normalizeSignatureImage(reader.result);\n      setSignatureImage(key, dataUrl);\n      autoSave();\n      statusEl.textContent = 'Firma allegata';\n      setTimeout(() => statusEl.textContent = '', 1800);\n    } catch (e) {\n      alert('Non è stato possibile leggere il file della firma.');\n    }\n  };\n  reader.onerror = () => alert('Non è stato possibile leggere il file della firma.');\n  reader.readAsDataURL(file);\n}\n\nfunction clearSignature(key) {\n  setSignatureImage(key, '');\n  const input = document.querySelector(\`input[data-signature-input="\${key}\"]\`);\n  if (input) input.value = '';\n  autoSave();\n}`;
+
+  s = s.slice(0, oldStart) + newSignatureJs + s.slice(oldEnd);
+
+  s = replaceOnce(s, `if (!confirm('Vuoi cancellare tutti i dati di questa scheda e iniziarne una nuova?')) return;`, `if (!confirm('Creare una nuova scheda? Tutti i dati attualmente compilati verranno azzerati. Assicurati di aver salvato la bozza prima di continuare.')) return;`, 'conferma nuova scheda');
+
+  if (!s.includes('Allega / cambia firma') || s.includes('Firma con dito, penna touch o mouse') || s.includes('initSignaturePads')) {
+    throw new Error('Verifica finale modifica firma non superata');
+  }
+
+  s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
+
+  const productionScripts = '<script src="sync.js?v=10"><' + '/script><script src="commessa-search.js?v=3"><' + '/script><script src="operator-fix.js?v=3"><' + '/script><script src="signature-ui.js?v=3"><' + '/script><script src="signature-phone.js?v=1"><' + '/script><script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script>';
+  const officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script>';
+  s = s.replace('</body>', (role === 'office' ? officeScripts : productionScripts) + '\n</body>');
+
+  document.open();
+  document.write(s);
+  document.close();
+}
+
+async function boot() {
+  const role = String(localStorage.getItem(ROLE_KEY) || '').trim();
+  const code = storedCodeForRole(role);
+
+  if (['production','office'].includes(role) && code) {
+    if (role === 'office') sessionStorage.setItem(OFFICE_SESSION_KEY, code);
+    try {
+      const result = await validateAccess(code);
+      if (result.ok && result.role === role) {
+        await loadApp(role);
+        return;
+      }
+      clearAccess();
+    } catch (err) {
+      console.warn('Verifica accesso non disponibile, uso accesso memorizzato.', err);
+      await loadApp(role);
+      return;
+    }
+  }
+
+  showAccess();
+}
+
+boot().catch(err => {
+  console.error(err);
+  document.body.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif"><b>Impossibile caricare PW Collaudo.</b><br>Ricarica la pagina.</div>';
+});
 </script>
 </body>
 </html>
