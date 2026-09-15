@@ -5,6 +5,7 @@
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
   const role = String(localStorage.getItem(ROLE_KEY) || '').trim();
   let officeOpened = false;
+  let officeExportReady = role !== 'office';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -60,6 +61,23 @@
     else topbar.appendChild(btn);
   }
 
+  function loadOfficeExport() {
+    if (role !== 'office' || document.querySelector('script[data-pw-office-export]')) return;
+    const script = document.createElement('script');
+    script.src = 'office-export.js?v=1';
+    script.async = false;
+    script.dataset.pwOfficeExport = '1';
+    script.onload = () => {
+      officeExportReady = true;
+      applyRoleUi();
+    };
+    script.onerror = () => {
+      officeExportReady = true;
+      applyRoleUi();
+    };
+    document.head.appendChild(script);
+  }
+
   function applyRoleUi() {
     if (role === 'production') {
       document.body.classList.add('pw-role-production');
@@ -67,11 +85,12 @@
     } else if (role === 'office') {
       document.body.classList.add('pw-role-office');
       document.body.classList.remove('pw-role-production');
+      loadOfficeExport();
     }
 
     installSwitchButton();
 
-    if (role === 'office' && !officeOpened) {
+    if (role === 'office' && officeExportReady && !officeOpened) {
       const archiveButton = document.querySelector('.pw-archive-btn');
       if (archiveButton) {
         officeOpened = true;
