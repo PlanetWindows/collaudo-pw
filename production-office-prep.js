@@ -7,7 +7,8 @@
   const style=document.createElement('style');
   style.textContent=`
     .pw-office-readonly{margin:12px 0 16px;border:1px solid #d7c183;border-radius:9px;background:#fffaf0;padding:12px 14px}
-    .pw-office-readonly-title{font-weight:700;font-size:13px;margin-bottom:5px}.pw-office-readonly-text{font-size:12px;color:#555;line-height:1.4}
+    .pw-office-readonly-title{font-weight:700;font-size:13px;margin-bottom:5px}.pw-office-readonly-text{font-size:12px;color:#555;line-height:1.5}
+    .pw-office-readonly-row{margin-top:3px}.pw-office-readonly-row:first-child{margin-top:0}
     .pw-office-readonly-ddt{margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pw-office-readonly-ddt button{border:0;border-radius:7px;background:#111;color:#fff;padding:8px 11px;font-weight:700;cursor:pointer}
     .pw-office-readonly-ddt .pw-ddt-name{font-size:12px;color:#333;overflow-wrap:anywhere}
     input.pw-office-locked{background:#f1f1f1!important;color:#444!important;cursor:not-allowed!important}
@@ -64,9 +65,10 @@
     if(!currentCommessa){panel.style.display='none';return}
     panel.style.display='block';
     const maniglione=String(currentItem?.maniglione||'');
+    const tipologia=String(currentItem?.tipologia||'');
     const ddt=String(currentItem?.ddt_name||'');
     const size=currentItem?.ddt_size?` · ${(Number(currentItem.ddt_size)/1024/1024).toFixed(2)} MB`:'';
-    const html=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text">${isEscape()?`Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b>`:'I dati Ufficio associati alla commessa vengono caricati automaticamente.'}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
+    const html=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text"><div class="pw-office-readonly-row">Tipologia: <b>${escapeHtml(tipologia||'non ancora inserita')}</b></div>${isEscape()?`<div class="pw-office-readonly-row">Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b></div>`:''}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
     if(panel.dataset.renderKey!==html){panel.innerHTML=html;panel.dataset.renderKey=html;panel.querySelector('.pw-open-ddt')?.addEventListener('click',openDdt)}
   }
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch])}
