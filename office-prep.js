@@ -10,8 +10,8 @@
     .pw-office-prep{max-width:980px;margin:26px auto;padding:0 18px 30px;box-sizing:border-box}
     .pw-office-prep-card{background:#fff;border:1px solid #ddd;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.08);padding:22px}
     .pw-office-prep h2{margin:0 0 5px;font-size:22px}.pw-office-prep .sub{color:#666;font-size:13px;margin-bottom:20px}
-    .pw-office-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}.pw-office-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
-    .pw-office-field input{width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:8px;padding:11px 12px;font-size:14px;background:#fff}
+    .pw-office-grid{display:grid;grid-template-columns:1fr 1.15fr 1.15fr;gap:16px}.pw-office-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
+    .pw-office-field input,.pw-office-field select{width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:8px;padding:11px 12px;font-size:14px;background:#fff}
     .pw-office-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:16px}
     .pw-office-actions button,.pw-ddt-actions button{border:0;border-radius:8px;padding:10px 13px;font-weight:700;cursor:pointer}
     .pw-office-save,.pw-ddt-add,.pw-ddt-replace{background:#c7a044;color:#111}.pw-office-load,.pw-ddt-open{background:#111;color:#fff}.pw-ddt-delete{background:#fff1f0;color:#a31818;border:1px solid #dba6a2!important}
@@ -27,9 +27,10 @@
   wrap.innerHTML = `
     <div class="pw-office-prep-card">
       <h2>Preparazione commessa</h2>
-      <div class="sub">Inserisci i dati Ufficio. Quando la Produzione digita lo stesso numero di commessa, il maniglione e il DDT vengono caricati automaticamente in sola lettura.</div>
+      <div class="sub">Inserisci i dati Ufficio. Quando la Produzione digita lo stesso numero di commessa, tipologia, maniglione e DDT vengono caricati automaticamente in sola lettura.</div>
       <div class="pw-office-grid">
         <div class="pw-office-field"><label>NUMERO DI COMMESSA</label><input id="pwOfficeCommessa" type="text" autocomplete="off" placeholder="Es. 12345"></div>
+        <div class="pw-office-field"><label>TIPOLOGIA</label><select id="pwOfficeTipologia"><option value="">Seleziona tipologia</option><option value="1 anta">1 anta</option><option value="2 ante">2 ante</option></select></div>
         <div class="pw-office-field"><label>MANIGLIONE</label><input id="pwOfficeManiglione" type="text" autocomplete="off" placeholder="Modello / riferimento maniglione"></div>
       </div>
       <div class="pw-office-actions">
@@ -50,6 +51,7 @@
   if (topbar?.parentNode) topbar.insertAdjacentElement('afterend', wrap); else document.body.prepend(wrap);
 
   const commessaEl = wrap.querySelector('#pwOfficeCommessa');
+  const tipologiaEl = wrap.querySelector('#pwOfficeTipologia');
   const maniglioneEl = wrap.querySelector('#pwOfficeManiglione');
   const statusEl = wrap.querySelector('#pwOfficeStatus');
   const ddtMeta = wrap.querySelector('#pwDdtMeta');
@@ -93,6 +95,7 @@
     try{
       const data=await call({action:'get',commessa:c});
       const item=data?.item||null;
+      tipologiaEl.value=String(item?.tipologia||'');
       maniglioneEl.value=String(item?.maniglione||'');
       renderDdt(item);
       setStatus(item?'Dati Ufficio caricati.':'Commessa nuova: puoi inserire i dati Ufficio.');
@@ -101,7 +104,7 @@
   async function save(){
     const c=commessa();if(!c){setStatus('Inserisci il numero di commessa.',true);return}
     commessaEl.value=c;setStatus('Salvataggio…');
-    try{const data=await call({action:'save',commessa:c,maniglione:maniglioneEl.value});renderDdt(data?.item||current);setStatus('Dati Ufficio salvati.');}
+    try{const data=await call({action:'save',commessa:c,tipologia:tipologiaEl.value,maniglione:maniglioneEl.value});renderDdt(data?.item||current);setStatus('Dati Ufficio salvati.');}
     catch(err){console.error(err);setStatus('Non è stato possibile salvare.',true)}
   }
   function fileBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.onerror=reject;r.readAsDataURL(file)})}
@@ -112,7 +115,7 @@
     setStatus('Caricamento DDT…');
     try{
       const b64=await fileBase64(file);
-      const data=await call({action:'upload_ddt',commessa:c,maniglione:maniglioneEl.value,file_name:file.name,file_type:file.type,file_base64:b64});
+      const data=await call({action:'upload_ddt',commessa:c,tipologia:tipologiaEl.value,maniglione:maniglioneEl.value,file_name:file.name,file_type:file.type,file_base64:b64});
       renderDdt(data?.item||null);setStatus('DDT allegato correttamente.');
     }catch(err){console.error(err);setStatus('Non è stato possibile allegare il DDT.',true)}finally{fileEl.value=''}
   }
@@ -128,7 +131,7 @@
   async function deleteDdt(){
     const c=commessa();if(!c)return;if(!confirm('Eliminare il DDT allegato a questa commessa?'))return;
     setStatus('Eliminazione DDT…');
-    try{const data=await call({action:'delete_ddt',commessa:c});renderDdt(data?.item||{maniglione:maniglioneEl.value});setStatus('DDT eliminato.');}
+    try{const data=await call({action:'delete_ddt',commessa:c});renderDdt(data?.item||{tipologia:tipologiaEl.value,maniglione:maniglioneEl.value});setStatus('DDT eliminato.');}
     catch(err){console.error(err);setStatus('Non è stato possibile eliminare il DDT.',true)}
   }
 
