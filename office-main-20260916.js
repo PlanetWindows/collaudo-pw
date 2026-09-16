@@ -5,6 +5,7 @@
   const OFFICE_SESSION_KEY='pw-collaudo-office-code-session';
   const SYNC_URL='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
   const EXPORT_URL='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-export';
+  const PREP_URL='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-prep';
   if(String(localStorage.getItem(ROLE_KEY)||'')!=='office')return;
 
   let openedOnce=false;
@@ -26,6 +27,7 @@
 
   function officeCode(){const code=String(localStorage.getItem(OFFICE_LOCAL_KEY)||sessionStorage.getItem(OFFICE_SESSION_KEY)||'').trim();if(code&&!sessionStorage.getItem(OFFICE_SESSION_KEY))sessionStorage.setItem(OFFICE_SESSION_KEY,code);return code}
   function rowCommessa(row){return String(row.querySelector('.pw-archive-commessa')?.textContent||'').replace(/^\s*Commessa\s*/i,'').trim()}
+  function safe(v){return String(v||'PW').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')||'PW'}
   function changeAccess(){if(!confirm('Vuoi uscire dall’area Ufficio e inserire un altro codice di accesso?'))return;localStorage.removeItem(ROLE_KEY);localStorage.removeItem(DEPT_CODE_KEY);localStorage.removeItem(OFFICE_LOCAL_KEY);sessionStorage.removeItem(OFFICE_SESSION_KEY);location.replace(location.pathname+'?access='+Date.now())}
   function closeArchive(){document.querySelector('.pw-archive-overlay')?.remove()}
   function installTopSwitch(){const topbar=document.querySelector('.topbar');if(!topbar||topbar.querySelector('.pw-office-top-switch'))return;const b=document.createElement('button');b.type='button';b.className='pw-office-top-switch';b.textContent='Cambia accesso';b.addEventListener('click',changeAccess);topbar.appendChild(b)}
@@ -33,14 +35,44 @@
 
   async function resolveId(row){if(row.dataset.archiveId)return row.dataset.archiveId;const code=officeCode(),commessa=rowCommessa(row);if(!code||!commessa)throw new Error('missing_data');const res=await fetch(SYNC_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'archive_list',office_code:code,search:commessa})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`list_${res.status}`);const wanted=commessa.toUpperCase().replace(/\s+/g,' ');const item=(data.items||[]).find(x=>String(x.commessa||'').trim().toUpperCase().replace(/\s+/g,' ')===wanted)||(data.items||[])[0];if(!item?.id)throw new Error('archive_not_found');row.dataset.archiveId=String(item.id);return row.dataset.archiveId}
 
-  async function requestExport(id,action){const code=officeCode();if(!code)throw new Error('office_code_missing');const res=await fetch(`${EXPORT_URL}?t=${Date.now()}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({action,office_code:code,id,nonce:Date.now()})});if(!res.ok){let data={};try{data=await res.json()}catch(_){ }throw new Error(`${data?.error||'export_error'}${data?.detail?': '+data.detail:''} [${res.status}]`)}return res}
+  async function requestPdf(id){const code=officeCode();if(!code)throw new Error('office_code_missing');const res=await fetch(`${EXPORT_URL}?t=${Date.now()}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({action:'pdf',office_code:code,id,nonce:Date.now()})});if(!res.ok){let data={};try{data=await res.json()}catch(_){ }throw new Error(`${data?.error||'pdf_error'}${data?.detail?': '+data.detail:''} [${res.status}]`)}return res.blob()}
+  async function requestPrep(commessa){const code=officeCode();if(!code)throw new Error('office_code_missing');const res=await fetch(PREP_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',access_code:code,commessa})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(`${data?.error||'prep_error'} [${res.status}]`);return data?.item||null}
+  async function requestDdt(commessa){const code=officeCode();if(!code)throw new Error('office_code_missing');const res=await fetch(PREP_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'download_ddt',access_code:code,commessa,download:true})});if(!res.ok){let data={};try{data=await res.json()}catch(_){ }throw new Error(`${data?.error||'ddt_error'} [${res.status}]`)}return res.blob()}
   function downloadBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000)}
 
-  async function openPdf(row,btn){const popup=window.open('','_blank');const old=btn.textContent;btn.disabled=true;btn.textContent='APRO…';try{const id=await resolveId(row);const res=await requestExport(id,'pdf');const blob=await res.blob();const url=URL.createObjectURL(blob);if(popup)popup.location.href=url;else window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(err){if(popup)popup.close();console.error(err);alert('Errore apertura PDF: '+String(err?.message||err))}finally{btn.disabled=false;btn.textContent=old}}
-  async function exportComplete(row,btn){const old=btn.textContent;btn.disabled=true;btn.textContent='ESPORTO…';try{const id=await resolveId(row);const commessa=(rowCommessa(row)||'PW').replace(/[^a-zA-Z0-9._-]+/g,'_');const res=await requestExport(id,'bundle');const blob=await res.blob();downloadBlob(blob,`Collaudo_${commessa}_completo.zip`);btn.textContent=res.headers.get('X-PW-Has-DDT')==='1'?'RAPPORTINO + DDT ✓':'RAPPORTINO ✓';setTimeout(()=>btn.textContent=old,2200)}catch(err){console.error(err);alert('Errore esportazione: '+String(err?.message||err));btn.textContent=old}finally{btn.disabled=false}}
+  async function openPdf(row,btn){const popup=window.open('','_blank');const old=btn.textContent;btn.disabled=true;btn.textContent='APRO…';try{const id=await resolveId(row);const blob=await requestPdf(id);const url=URL.createObjectURL(blob);if(popup)popup.location.href=url;else window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(err){if(popup)popup.close();console.error(err);alert('Errore apertura PDF: '+String(err?.message||err))}finally{btn.disabled=false;btn.textContent=old}}
+
+  async function exportSeparate(row,btn){
+    const old=btn.textContent;btn.disabled=true;btn.textContent='PREPARO I FILE…';
+    const commessaRaw=rowCommessa(row);
+    const commessa=safe(commessaRaw);
+    try{
+      const id=await resolveId(row);
+      const prepPromise=requestPrep(commessaRaw);
+      const pdfPromise=requestPdf(id);
+      const [pdfBlob,prep]=await Promise.all([pdfPromise,prepPromise]);
+
+      let ddtBlob=null;
+      if(prep?.ddt_name){ddtBlob=await requestDdt(commessaRaw)}
+
+      downloadBlob(pdfBlob,`Collaudo_${commessa}.pdf`);
+      if(ddtBlob){
+        setTimeout(()=>downloadBlob(ddtBlob,`DDT_${commessa}_${safe(prep.ddt_name)}`),450);
+        btn.textContent='2 FILE SCARICATI ✓';
+      }else{
+        btn.textContent='RAPPORTINO SCARICATO ✓';
+      }
+      setTimeout(()=>btn.textContent=old,2200);
+    }catch(err){
+      console.error('Esportazione separata',err);
+      alert('Errore esportazione: '+String(err?.message||err));
+      btn.textContent=old;
+    }finally{btn.disabled=false}
+  }
+
   async function deleteArchive(row,btn){const commessa=rowCommessa(row)||'questa commessa';if(!confirm(`Vuoi eliminare definitivamente la commessa ${commessa} dall’archivio collaudi?`))return;btn.disabled=true;try{const id=await resolveId(row),code=officeCode();const res=await fetch(SYNC_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'archive_delete',office_code:code,id})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`delete_${res.status}`);row.remove()}catch(err){console.error(err);btn.disabled=false;alert('Non è stato possibile eliminare il collaudo. Riprova.')}}
 
-  function enhanceRows(){installTopSwitch();installArchiveHeader();document.querySelectorAll('.pw-archive-row').forEach(row=>{let open=row.querySelector('.pw-archive-open');if(!open)return;if(open.dataset.officeFinal!=='1'){const fresh=open.cloneNode(true);open.replaceWith(fresh);open=fresh;open.dataset.officeFinal='1';open.classList.add('pw-office-open-pdf');open.textContent='APRI PDF';open.addEventListener('click',()=>openPdf(row,open))}let exp=row.querySelector('.pw-office-export');if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.textContent='ESPORTA RAPPORTINO + DDT';exp.addEventListener('click',()=>exportComplete(row,exp));open.insertAdjacentElement('afterend',exp)}else if(exp.dataset.officeFinal!=='1'){const fresh=exp.cloneNode(true);exp.replaceWith(fresh);exp=fresh;exp.dataset.officeFinal='1';exp.textContent='ESPORTA RAPPORTINO + DDT';exp.addEventListener('click',()=>exportComplete(row,exp))}if(!row.querySelector('.pw-office-delete')){const del=document.createElement('button');del.type='button';del.className='pw-office-delete';del.textContent='🗑';del.title='Elimina questa commessa dall’archivio';del.addEventListener('click',()=>deleteArchive(row,del));exp.insertAdjacentElement('afterend',del)}})}
+  function enhanceRows(){installTopSwitch();installArchiveHeader();document.querySelectorAll('.pw-archive-row').forEach(row=>{let open=row.querySelector('.pw-archive-open');if(!open)return;if(open.dataset.officeFinal!=='2'){const fresh=open.cloneNode(true);open.replaceWith(fresh);open=fresh;open.dataset.officeFinal='2';open.classList.add('pw-office-open-pdf');open.textContent='APRI PDF';open.addEventListener('click',()=>openPdf(row,open))}let exp=row.querySelector('.pw-office-export');if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.dataset.officeFinal='2';exp.textContent='ESPORTA PDF + DDT';exp.addEventListener('click',()=>exportSeparate(row,exp));open.insertAdjacentElement('afterend',exp)}else if(exp.dataset.officeFinal!=='2'){const fresh=exp.cloneNode(true);exp.replaceWith(fresh);exp=fresh;exp.dataset.officeFinal='2';exp.textContent='ESPORTA PDF + DDT';exp.addEventListener('click',()=>exportSeparate(row,exp))}if(!row.querySelector('.pw-office-delete')){const del=document.createElement('button');del.type='button';del.className='pw-office-delete';del.textContent='🗑';del.title='Elimina questa commessa dall’archivio';del.addEventListener('click',()=>deleteArchive(row,del));exp.insertAdjacentElement('afterend',del)}})}
 
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeArchive()});const observer=new MutationObserver(enhanceRows);observer.observe(document.body,{childList:true,subtree:true});enhanceRows();const timer=setInterval(()=>{enhanceRows();if(!openedOnce){const btn=document.querySelector('.pw-archive-btn');if(btn){openedOnce=true;btn.textContent='Archivio collaudi';btn.click()}}},120);setTimeout(()=>clearInterval(timer),5000);
 })();
