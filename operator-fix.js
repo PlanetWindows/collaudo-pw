@@ -34,6 +34,16 @@
   positionScript.async = false;
   document.head.appendChild(positionScript);
 
+  const apolloSignatureScript = document.createElement('script');
+  apolloSignatureScript.src = 'apollo-signature.js?v=2';
+  apolloSignatureScript.async = false;
+  document.head.appendChild(apolloSignatureScript);
+
+  const officePrepProductionScript = document.createElement('script');
+  officePrepProductionScript.src = 'production-office-prep.js?v=1';
+  officePrepProductionScript.async = false;
+  document.head.appendChild(officePrepProductionScript);
+
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
   const LEGACY_DEFAULT = 'ANGELO IDONE';
