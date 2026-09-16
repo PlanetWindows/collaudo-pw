@@ -36,14 +36,14 @@
 
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
-  const OLD_OPERATOR = 'APOLLO FRANCESCO';
-  const NEW_OPERATOR = 'ANGELO IDONE';
+  const LEGACY_DEFAULT = 'ANGELO IDONE';
+  const NEW_DEFAULT = 'APOLLO FRANCESCO';
 
   function isTargetForm() {
     return (document.getElementById('formType')?.value || '') === TARGET_TYPE;
   }
 
-  function enforceIdone() {
+  function enforceApolloDefault() {
     if (!isTargetForm()) return;
 
     const rows = document.querySelectorAll('#formArea tbody tr');
@@ -58,32 +58,25 @@
     const select = block.querySelector('.pw-operator-select');
     if (!hiddenInput || !nameEl || !select) return;
 
-    const oldOption = Array.from(select.options).find(option => option.value === OLD_OPERATOR);
-    if (oldOption) oldOption.remove();
-
-    if (!Array.from(select.options).some(option => option.value === NEW_OPERATOR)) {
+    if (!Array.from(select.options).some(option => option.value === NEW_DEFAULT)) {
       const option = document.createElement('option');
-      option.value = NEW_OPERATOR;
-      option.textContent = NEW_OPERATOR;
-      select.insertBefore(option, select.firstChild);
+      option.value = NEW_DEFAULT;
+      option.textContent = NEW_DEFAULT;
+      select.appendChild(option);
     }
 
-    if (hiddenInput.value === OLD_OPERATOR || !hiddenInput.value) {
-      hiddenInput.value = NEW_OPERATOR;
-      nameEl.textContent = NEW_OPERATOR;
-      select.value = NEW_OPERATOR;
-
-      if (typeof clearPhaseSignature === 'function') clearPhaseSignature(TARGET_INDEX);
+    const current = String(hiddenInput.value || '').trim();
+    if (!current || current === LEGACY_DEFAULT) {
+      hiddenInput.value = NEW_DEFAULT;
+      nameEl.textContent = NEW_DEFAULT;
+      select.value = NEW_DEFAULT;
       hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
       if (typeof autoSave === 'function') autoSave();
       if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(100);
-    } else if (nameEl.textContent === OLD_OPERATOR) {
-      nameEl.textContent = hiddenInput.value;
-      select.value = hiddenInput.value;
     }
   }
 
-  document.getElementById('formType')?.addEventListener('change', () => setTimeout(enforceIdone, 50));
-  setTimeout(enforceIdone, 0);
-  setInterval(enforceIdone, 500);
+  document.getElementById('formType')?.addEventListener('change', () => setTimeout(enforceApolloDefault, 60));
+  setTimeout(enforceApolloDefault, 0);
+  setInterval(enforceApolloDefault, 500);
 })();
