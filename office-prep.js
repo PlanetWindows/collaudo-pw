@@ -1,13 +1,24 @@
 (() => {
   const ROLE_KEY='pw-collaudo-role';
+  const DEPT_CODE_KEY='pw-collaudo-access-code';
   const OFFICE_LOCAL_KEY='pw-collaudo-office-code';
   const OFFICE_SESSION_KEY='pw-collaudo-office-code-session';
   const API='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-prep';
   const ESCAPE_TYPES=new Set(['pvc_vie_fuga','alu_vie_fuga']);
   if(String(localStorage.getItem(ROLE_KEY)||'')!=='office')return;
 
+  document.body.classList.add('pw-role-office');
+
   const style=document.createElement('style');
   style.textContent=`
+    body.pw-role-office .sheet,
+    body.pw-role-office .pw-complete-archive-btn{display:none!important}
+    body.pw-role-office .topbar>strong,
+    body.pw-role-office .topbar>select,
+    body.pw-role-office .topbar>button:not(.pw-archive-btn):not(.pw-office-top-switch){display:none!important}
+    body.pw-role-office .topbar{justify-content:flex-end!important;gap:10px!important;min-height:56px}
+    body.pw-role-office .pw-archive-btn{display:inline-flex!important}
+    .pw-office-top-switch{border:0!important;border-radius:8px!important;padding:9px 12px!important;font-weight:700!important;cursor:pointer!important;background:#c7a044!important;color:#111!important}
     .pw-office-prep{max-width:980px;margin:26px auto;padding:0 18px 30px;box-sizing:border-box}
     .pw-office-prep-card{background:#fff;border:1px solid #ddd;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.08);padding:22px}
     .pw-office-prep h2{margin:0 0 5px;font-size:22px}.pw-office-prep .sub{color:#666;font-size:13px;margin-bottom:20px;line-height:1.45}
@@ -23,6 +34,32 @@
     @media(max-width:700px){.pw-office-grid,.pw-office-escape-row{grid-template-columns:1fr}.pw-office-prep{margin-top:14px;padding:0 10px 24px}.pw-office-prep-card{padding:16px}.pw-office-actions button,.pw-ddt-actions button{width:100%;min-height:42px}}
   `;
   document.head.appendChild(style);
+
+  function changeAccess(){
+    if(!confirm('Vuoi uscire dall’area Ufficio e inserire un altro codice di accesso?'))return;
+    localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(DEPT_CODE_KEY);
+    localStorage.removeItem(OFFICE_LOCAL_KEY);
+    sessionStorage.removeItem(OFFICE_SESSION_KEY);
+    location.replace(location.pathname+'?access='+Date.now());
+  }
+
+  function installOfficeTopbar(){
+    const topbar=document.querySelector('.topbar');
+    if(!topbar)return;
+    const archive=topbar.querySelector('.pw-archive-btn');
+    if(archive)archive.textContent='Archivio ufficio';
+    if(!topbar.querySelector('.pw-office-top-switch')){
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='pw-office-top-switch';
+      btn.textContent='Cambia accesso';
+      btn.addEventListener('click',changeAccess);
+      topbar.appendChild(btn);
+    }
+  }
+  installOfficeTopbar();
+  setTimeout(installOfficeTopbar,200);
 
   const wrap=document.createElement('div');
   wrap.className='pw-office-prep';
