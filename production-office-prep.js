@@ -2,6 +2,7 @@
   const ROLE_KEY='pw-collaudo-role';
   const CODE_KEY='pw-collaudo-access-code';
   const API='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-prep';
+  const LABELS={pvc:'PVC',pvc_speciali:'PVC - Pezzi speciali',pvc_vie_fuga:'PVC - Vie di fuga',alu:'Alluminio',alu_speciali:'Alluminio - Pezzi speciali',alu_vie_fuga:'Alluminio - Vie di fuga'};
   if(String(localStorage.getItem(ROLE_KEY)||'')!=='production')return;
 
   const style=document.createElement('style');
@@ -17,91 +18,32 @@
   `;
   document.head.appendChild(style);
 
-  let currentCommessa='';
-  let currentItem=null;
-  let timer=0;
-  let requestSeq=0;
-
+  let currentCommessa='',currentItem=null,timer=0,requestSeq=0;
   function code(){return String(localStorage.getItem(CODE_KEY)||'').trim()}
   function commessa(){return String(document.querySelector('[data-field="commessa"]')?.value||'').trim().toUpperCase().replace(/\s+/g,' ')}
-  function isEscape(){return ['pvc_vie_fuga','alu_vie_fuga'].includes(String(document.getElementById('formType')?.value||''))}
-  async function getPrep(c){
-    const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',access_code:code(),commessa:c})});
-    let data={};try{data=await res.json()}catch(_){ }
-    if(!res.ok)throw new Error(data?.error||`prep_${res.status}`);
-    return data?.item||null;
-  }
+  function currentType(){return String(document.getElementById('formType')?.value||'')}
+  function isEscape(){return ['pvc_vie_fuga','alu_vie_fuga'].includes(currentType())}
+  async function getPrep(c){const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',access_code:code(),commessa:c})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`prep_${res.status}`);return data?.item||null}
   function lockManiglione(){
-    if(!isEscape())return;
-    const input=document.querySelector('input[data-field="extra_0"]');
-    if(!input)return;
-    const wanted=String(currentItem?.maniglione||'');
-    if(input.value!==wanted){input.value=wanted;input.dispatchEvent(new Event('input',{bubbles:true}))}
-    input.readOnly=true;
-    input.setAttribute('aria-readonly','true');
-    input.classList.add('pw-office-locked');
-    input.title='Dato gestito esclusivamente dall’Ufficio';
-    const row=input.closest('.extra-row');
-    if(row&&!row.querySelector('.pw-office-lock-note')){
-      const note=document.createElement('span');note.className='pw-office-lock-note';note.textContent='Compilato dall’Ufficio · sola lettura';input.insertAdjacentElement('afterend',note);
-    }
-    if(input.dataset.officeLock!=='1'){
-      input.dataset.officeLock='1';
-      ['beforeinput','paste','drop'].forEach(ev=>input.addEventListener(ev,e=>e.preventDefault()));
-      input.addEventListener('keydown',e=>{if(!['Tab','Shift'].includes(e.key))e.preventDefault()});
-      input.addEventListener('input',()=>{const v=String(currentItem?.maniglione||'');if(input.value!==v)input.value=v});
-    }
+    if(!isEscape())return;const input=document.querySelector('input[data-field="extra_0"]');if(!input)return;
+    const wanted=String(currentItem?.maniglione||'');if(input.value!==wanted){input.value=wanted;input.dispatchEvent(new Event('input',{bubbles:true}))}
+    input.readOnly=true;input.setAttribute('aria-readonly','true');input.classList.add('pw-office-locked');input.title='Dato gestito esclusivamente dall’Ufficio';
+    const row=input.closest('.extra-row');if(row&&!row.querySelector('.pw-office-lock-note')){const note=document.createElement('span');note.className='pw-office-lock-note';note.textContent='Compilato dall’Ufficio · sola lettura';input.insertAdjacentElement('afterend',note)}
+    if(input.dataset.officeLock!=='1'){input.dataset.officeLock='1';['beforeinput','paste','drop'].forEach(ev=>input.addEventListener(ev,e=>e.preventDefault()));input.addEventListener('keydown',e=>{if(!['Tab','Shift'].includes(e.key))e.preventDefault()});input.addEventListener('input',()=>{const v=String(currentItem?.maniglione||'');if(input.value!==v)input.value=v})}
   }
-  function ensurePanel(){
-    let panel=document.querySelector('.pw-office-readonly');
-    const meta=document.querySelector('.meta');
-    if(!meta)return null;
-    if(!panel){panel=document.createElement('div');panel.className='pw-office-readonly';meta.insertAdjacentElement('afterend',panel)}
-    return panel;
-  }
+  function ensurePanel(){let panel=document.querySelector('.pw-office-readonly');const meta=document.querySelector('.meta');if(!meta)return null;if(!panel){panel=document.createElement('div');panel.className='pw-office-readonly';meta.insertAdjacentElement('afterend',panel)}return panel}
+  function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'})[ch])}
   function render(){
-    lockManiglione();
-    const panel=ensurePanel();if(!panel)return;
-    if(!currentCommessa){panel.style.display='none';return}
-    panel.style.display='block';
-    const maniglione=String(currentItem?.maniglione||'');
-    const tipologia=String(currentItem?.tipologia||'');
-    const ddt=String(currentItem?.ddt_name||'');
-    const size=currentItem?.ddt_size?` · ${(Number(currentItem.ddt_size)/1024/1024).toFixed(2)} MB`:'';
-    const html=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text"><div class="pw-office-readonly-row">Tipologia: <b>${escapeHtml(tipologia||'non ancora inserita')}</b></div>${isEscape()?`<div class="pw-office-readonly-row">Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b></div>`:''}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
+    lockManiglione();const panel=ensurePanel();if(!panel)return;if(!currentCommessa){panel.style.display='none';return}panel.style.display='block';
+    const itemType=String(currentItem?.form_type||currentType()),maniglione=String(currentItem?.maniglione||''),tipologia=String(currentItem?.tipologia||''),ddt=String(currentItem?.ddt_name||'');const size=currentItem?.ddt_size?` · ${(Number(currentItem.ddt_size)/1024/1024).toFixed(2)} MB`:'';
+    const escape=['pvc_vie_fuga','alu_vie_fuga'].includes(itemType);
+    const html=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text"><div class="pw-office-readonly-row">Tipo collaudo: <b>${escapeHtml(LABELS[itemType]||itemType||'-')}</b></div>${escape?`<div class="pw-office-readonly-row">Tipologia: <b>${escapeHtml(tipologia||'non ancora inserita')}</b></div><div class="pw-office-readonly-row">Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b></div>`:''}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
     if(panel.dataset.renderKey!==html){panel.innerHTML=html;panel.dataset.renderKey=html;panel.querySelector('.pw-open-ddt')?.addEventListener('click',openDdt)}
   }
-  function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch])}
-  async function openDdt(){
-    if(!currentCommessa||!currentItem?.ddt_name)return;
-    const popup=window.open('','_blank');
-    try{
-      const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'download_ddt',access_code:code(),commessa:currentCommessa,download:false})});
-      if(!res.ok)throw new Error('ddt_download_failed');
-      const blob=await res.blob();const url=URL.createObjectURL(blob);if(popup)popup.location.href=url;else window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }catch(err){if(popup)popup.close();console.error(err);alert('Non è stato possibile aprire il DDT.')}
-  }
-  async function load(force=false){
-    const c=commessa();
-    if(!c){currentCommessa='';currentItem=null;render();return}
-    if(!force&&c===currentCommessa){render();return}
-    currentCommessa=c;const seq=++requestSeq;
-    try{const item=await getPrep(c);if(seq!==requestSeq)return;currentItem=item;render();if(window.PWCollaudoSync?.queueSave&&isEscape())window.PWCollaudoSync.queueSave(120)}
-    catch(err){if(seq!==requestSeq)return;console.error('Dati Ufficio',err);currentItem=null;render()}
-  }
-  function bind(){
-    const field=document.querySelector('[data-field="commessa"]');
-    if(field&&field.dataset.officePrepWatch!=='1'){
-      field.dataset.officePrepWatch='1';
-      field.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>load(true),500)});
-      field.addEventListener('change',()=>load(true));
-      field.addEventListener('blur',()=>load(true));
-    }
-    lockManiglione();
-  }
+  async function openDdt(){if(!currentCommessa||!currentItem?.ddt_name)return;const popup=window.open('','_blank');try{const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'download_ddt',access_code:code(),commessa:currentCommessa,download:false})});if(!res.ok)throw new Error('ddt_download_failed');const blob=await res.blob(),url=URL.createObjectURL(blob);if(popup)popup.location.href=url;else window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(err){if(popup)popup.close();console.error(err);alert('Non è stato possibile aprire il DDT.')}}
+  async function load(force=false){const c=commessa();if(!c){currentCommessa='';currentItem=null;render();return}if(!force&&c===currentCommessa){render();return}currentCommessa=c;const seq=++requestSeq;try{const item=await getPrep(c);if(seq!==requestSeq)return;currentItem=item;render();if(window.PWCollaudoSync?.queueSave&&isEscape())window.PWCollaudoSync.queueSave(120)}catch(err){if(seq!==requestSeq)return;console.error('Dati Ufficio',err);currentItem=null;render()}}
+  function bind(){const field=document.querySelector('[data-field="commessa"]');if(field&&field.dataset.officePrepWatch!=='1'){field.dataset.officePrepWatch='1';field.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>load(true),350)});field.addEventListener('change',()=>load(true));field.addEventListener('blur',()=>load(true))}lockManiglione()}
   function refresh(){bind();load(false);render()}
-  document.getElementById('formType')?.addEventListener('change',()=>{currentItem=null;setTimeout(()=>load(true),80)});
-  const observer=new MutationObserver(()=>{bind();lockManiglione()});
-  observer.observe(document.body,{childList:true,subtree:true});
-  refresh();setInterval(refresh,900);
+  document.getElementById('formType')?.addEventListener('change',()=>{currentItem=null;setTimeout(()=>load(true),100)});
+  const observer=new MutationObserver(()=>{bind();lockManiglione()});observer.observe(document.body,{childList:true,subtree:true});refresh();setInterval(refresh,900);
 })();
