@@ -25,9 +25,14 @@
   document.head.appendChild(zipScript);
 
   const aluExtensionScript = document.createElement('script');
-  aluExtensionScript.src = 'alu-extension.js?v=1';
+  aluExtensionScript.src = 'alu-extension.js?v=2';
   aluExtensionScript.async = false;
   document.head.appendChild(aluExtensionScript);
+
+  const positionScript = document.createElement('script');
+  positionScript.src = 'fire-escape-position.js?v=1';
+  positionScript.async = false;
+  document.head.appendChild(positionScript);
 
   const TARGET_TYPE = 'pvc';
   const TARGET_INDEX = 3;
