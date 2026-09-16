@@ -67,6 +67,10 @@
     });
 
     cell.appendChild(wrap);
+
+    if (commessa.value && window.PWCollaudoSync?.reload) {
+      setTimeout(() => window.PWCollaudoSync.reload(), 80);
+    }
   }
 
   document.getElementById('formType')?.addEventListener('change', () => setTimeout(install, 20));
