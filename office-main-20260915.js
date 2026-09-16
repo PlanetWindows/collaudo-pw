@@ -1,8 +1,8 @@
 (() => {
   const scripts = [
-    'office-main-20260916.js?v=3',
-    'office-prep.js?v=4',
-    'office-export-ddt.js?v=1'
+    'office-prep.js?v=6',
+    'office-main-20260916.js?v=4',
+    'office-export-ddt.js?v=2'
   ];
 
   scripts.forEach(src => {
