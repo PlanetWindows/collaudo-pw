@@ -44,11 +44,10 @@
     if(row&&!row.querySelector('.pw-office-lock-note')){
       const note=document.createElement('span');note.className='pw-office-lock-note';note.textContent='Compilato dall’Ufficio · sola lettura';input.insertAdjacentElement('afterend',note);
     }
-    const block=e=>{if(e.type==='keydown'&&!['Tab','Shift'].includes(e.key))e.preventDefault();};
     if(input.dataset.officeLock!=='1'){
       input.dataset.officeLock='1';
       ['beforeinput','paste','drop'].forEach(ev=>input.addEventListener(ev,e=>e.preventDefault()));
-      input.addEventListener('keydown',block);
+      input.addEventListener('keydown',e=>{if(!['Tab','Shift'].includes(e.key))e.preventDefault()});
       input.addEventListener('input',()=>{const v=String(currentItem?.maniglione||'');if(input.value!==v)input.value=v});
     }
   }
@@ -67,8 +66,8 @@
     const maniglione=String(currentItem?.maniglione||'');
     const ddt=String(currentItem?.ddt_name||'');
     const size=currentItem?.ddt_size?` · ${(Number(currentItem.ddt_size)/1024/1024).toFixed(2)} MB`:'';
-    panel.innerHTML=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text">${isEscape()?`Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b>`:'I dati Ufficio associati alla commessa vengono caricati automaticamente.'}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
-    panel.querySelector('.pw-open-ddt')?.addEventListener('click',openDdt);
+    const html=`<div class="pw-office-readonly-title">Dati Ufficio · sola lettura</div><div class="pw-office-readonly-text">${isEscape()?`Maniglione: <b>${escapeHtml(maniglione||'non ancora inserito')}</b>`:'I dati Ufficio associati alla commessa vengono caricati automaticamente.'}</div><div class="pw-office-readonly-ddt">${ddt?`<span class="pw-ddt-name">DDT: <b>${escapeHtml(ddt)}</b>${size}</span><button type="button" class="pw-open-ddt">Apri DDT</button>`:'<span class="pw-ddt-name">Nessun DDT allegato dall’Ufficio.</span>'}</div>`;
+    if(panel.dataset.renderKey!==html){panel.innerHTML=html;panel.dataset.renderKey=html;panel.querySelector('.pw-open-ddt')?.addEventListener('click',openDdt)}
   }
   function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch])}
   async function openDdt(){
@@ -100,7 +99,7 @@
   }
   function refresh(){bind();load(false);render()}
   document.getElementById('formType')?.addEventListener('change',()=>{currentItem=null;setTimeout(()=>load(true),80)});
-  const observer=new MutationObserver(()=>{bind();lockManiglione();render()});
+  const observer=new MutationObserver(()=>{bind();lockManiglione()});
   observer.observe(document.body,{childList:true,subtree:true});
   refresh();setInterval(refresh,900);
 })();
