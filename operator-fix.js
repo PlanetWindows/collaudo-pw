@@ -30,7 +30,7 @@
   document.head.appendChild(aluExtensionScript);
 
   const positionScript = document.createElement('script');
-  positionScript.src = 'fire-escape-position.js?v=1';
+  positionScript.src = 'fire-escape-position.js?v=2';
   positionScript.async = false;
   document.head.appendChild(positionScript);
 
