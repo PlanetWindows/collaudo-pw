@@ -1,8 +1,9 @@
 (() => {
+  const fresh = Date.now();
   const scripts = [
-    'office-prep.js?v=6',
-    'office-main-20260916.js?v=4',
-    'office-export-ddt.js?v=3'
+    `office-prep.js?v=${fresh}`,
+    `office-main-20260916.js?v=${fresh}`,
+    `office-export-ddt.js?v=${fresh}`
   ];
 
   scripts.forEach(src => {
