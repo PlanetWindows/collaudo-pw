@@ -45,21 +45,17 @@
 
   async function requestFile(id,action){
     const code=officeCode();if(!code)throw new Error('office_code_missing');
-    const res=await fetch(`${EXPORT_URL}?v=approved-layout-2&t=${Date.now()}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,office_code:code,id,nonce:Date.now()})});
-    if(action==='ddt'&&res.status===404)return null;
+    const res=await fetch(`${EXPORT_URL}?v=approved-layout-zip-1&t=${Date.now()}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,office_code:code,id,nonce:Date.now()})});
     if(!res.ok){let data={};try{data=await res.json()}catch(_){ }throw new Error(`${data?.error||'export_error'}${data?.detail?': '+data.detail:''} [${res.status}]`)}
-    return {blob:await res.blob(),name:filenameFromDisposition(res.headers.get('Content-Disposition'),action==='ddt'?'DDT.pdf':'Collaudo_PW.pdf'),hasDdt:res.headers.get('X-PW-Has-DDT')==='1'};
+    const fallback=action==='zip'?'Collaudo_PW.zip':'Collaudo_PW.pdf';
+    return {blob:await res.blob(),name:filenameFromDisposition(res.headers.get('Content-Disposition'),fallback)};
   }
 
-  function downloadFiles(files){
-    const anchors=[];
-    for(const file of files){
-      if(!file?.blob)continue;
-      const url=URL.createObjectURL(file.blob);
-      const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);anchors.push({a,url});
-    }
-    anchors.forEach(({a})=>a.click());
-    anchors.forEach(({a,url})=>{a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000)});
+  function downloadFile(file){
+    if(!file?.blob)return;
+    const url=URL.createObjectURL(file.blob);
+    const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),15000);
   }
 
   async function openPdf(row,btn){
@@ -69,16 +65,15 @@
     finally{btn.disabled=false;btn.textContent=old}
   }
 
-  async function exportSeparate(row,btn){
-    const old=btn.textContent;btn.disabled=true;btn.textContent='PREPARO I FILE…';
+  async function exportZip(row,btn){
+    const old=btn.textContent;btn.disabled=true;btn.textContent='PREPARO ZIP…';
     try{
       const id=await resolveId(row);
-      const pdf=await requestFile(id,'pdf');
-      const ddt=pdf.hasDdt?await requestFile(id,'ddt'):null;
-      downloadFiles(ddt?[pdf,ddt]:[pdf]);
-      btn.textContent=ddt?'PDF + DDT SCARICATI ✓':'PDF SCARICATO ✓';
+      const file=await requestFile(id,'zip');
+      downloadFile(file);
+      btn.textContent='ZIP SCARICATO ✓';
       setTimeout(()=>btn.textContent=old,2200);
-    }catch(err){console.error('Esportazione',err);alert('Errore esportazione: '+String(err?.message||err));btn.textContent=old}
+    }catch(err){console.error('Esportazione ZIP',err);alert('Errore esportazione ZIP: '+String(err?.message||err));btn.textContent=old}
     finally{btn.disabled=false}
   }
 
@@ -92,10 +87,10 @@
     installTopSwitch();installArchiveHeader();
     document.querySelectorAll('.pw-archive-row').forEach(row=>{
       let open=row.querySelector('.pw-archive-open');if(!open)return;
-      if(open.dataset.officeApproved!=='1'){const fresh=open.cloneNode(true);open.replaceWith(fresh);open=fresh;open.dataset.officeApproved='1';open.classList.add('pw-office-open-pdf');open.textContent='APRI PDF';open.addEventListener('click',()=>openPdf(row,open))}
+      if(open.dataset.officeApproved!=='2'){const fresh=open.cloneNode(true);open.replaceWith(fresh);open=fresh;open.dataset.officeApproved='2';open.classList.add('pw-office-open-pdf');open.textContent='APRI PDF';open.addEventListener('click',()=>openPdf(row,open))}
       let exp=row.querySelector('.pw-office-export');
-      if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.dataset.officeApproved='1';exp.textContent='ESPORTA PDF + DDT';exp.title='Scarica direttamente sul PC il rapportino PDF e il DDT allegato';exp.addEventListener('click',()=>exportSeparate(row,exp));open.insertAdjacentElement('afterend',exp)}
-      else if(exp.dataset.officeApproved!=='1'){const fresh=exp.cloneNode(true);exp.replaceWith(fresh);exp=fresh;exp.dataset.officeApproved='1';exp.textContent='ESPORTA PDF + DDT';exp.addEventListener('click',()=>exportSeparate(row,exp))}
+      if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.dataset.officeApproved='2';exp.textContent='ESPORTA ZIP';exp.title='Scarica sul PC uno ZIP con rapportino PDF e DDT allegato';exp.addEventListener('click',()=>exportZip(row,exp));open.insertAdjacentElement('afterend',exp)}
+      else if(exp.dataset.officeApproved!=='2'){const fresh=exp.cloneNode(true);exp.replaceWith(fresh);exp=fresh;exp.dataset.officeApproved='2';exp.textContent='ESPORTA ZIP';exp.title='Scarica sul PC uno ZIP con rapportino PDF e DDT allegato';exp.addEventListener('click',()=>exportZip(row,exp))}
       if(!row.querySelector('.pw-office-delete')){const del=document.createElement('button');del.type='button';del.className='pw-office-delete';del.textContent='🗑';del.title='Elimina questa commessa dall’archivio';del.addEventListener('click',()=>deleteArchive(row,del));exp.insertAdjacentElement('afterend',del)}
     })
   }
