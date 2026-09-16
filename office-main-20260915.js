@@ -5,6 +5,7 @@
   const OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
   const SYNC_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
   const EXPORT_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-export';
+  const PDF_VERSION = '20260916-NEW-LAYOUT';
 
   if (String(localStorage.getItem(ROLE_KEY) || '') !== 'office') return;
 
@@ -116,7 +117,9 @@
     if(!code||!commessa) throw new Error('missing_data');
 
     const res=await fetch(SYNC_URL,{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',
+      cache:'no-store',
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},
       body:JSON.stringify({action:'archive_list',office_code:code,search:commessa})
     });
     let data={}; try{data=await res.json()}catch(_){ }
@@ -131,14 +134,15 @@
   async function getPdf(id){
     const code=officeCode();
     if(!code) throw new Error('office_code_missing');
-    const res=await fetch(EXPORT_URL,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'pdf',office_code:code,id})
+    const url=`${EXPORT_URL}?v=${encodeURIComponent(PDF_VERSION)}&t=${Date.now()}`;
+    const res=await fetch(url,{
+      method:'POST',
+      cache:'no-store',
+      headers:{'Content-Type':'application/json','Cache-Control':'no-cache, no-store, must-revalidate','Pragma':'no-cache'},
+      body:JSON.stringify({action:'pdf',office_code:code,id,pdf_version:PDF_VERSION,nonce:Date.now()})
     });
     if(!res.ok){let data={};try{data=await res.json()}catch(_){ } throw new Error(data?.error||`pdf_${res.status}`)}
-    const disp=String(res.headers.get('Content-Disposition')||'');
-    const m=disp.match(/filename="?([^";]+)"?/i);
-    return {blob:await res.blob(),name:m?m[1]:'Collaudo_PW.pdf'};
+    return {blob:await res.blob()};
   }
 
   async function openPdf(row,btn){
@@ -155,8 +159,10 @@
   async function exportPdf(row,btn){
     const old=btn.textContent; btn.disabled=true; btn.textContent='ESPORTO…';
     try{
-      const id=await resolveId(row); const {blob,name}=await getPdf(id); const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+      const id=await resolveId(row); const {blob}=await getPdf(id); const url=URL.createObjectURL(blob);
+      const commessa=(rowCommessa(row)||'PW').replace(/[^a-zA-Z0-9._-]+/g,'_');
+      const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+      const a=document.createElement('a');a.href=url;a.download=`Collaudo_${commessa}_AGGIORNATO_${stamp}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
     }catch(err){console.error(err);alert('Non è stato possibile esportare il PDF sul PC. Riprova.')}finally{btn.disabled=false;btn.textContent=old}
   }
 
@@ -166,7 +172,7 @@
     btn.disabled=true;
     try{
       const id=await resolveId(row); const code=officeCode();
-      const res=await fetch(SYNC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'archive_delete',office_code:code,id})});
+      const res=await fetch(SYNC_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'archive_delete',office_code:code,id})});
       let data={};try{data=await res.json()}catch(_){ }
       if(!res.ok) throw new Error(data?.error||`delete_${res.status}`);
       row.remove();
@@ -181,13 +187,13 @@
     document.querySelectorAll('.pw-archive-row').forEach(row=>{
       let open=row.querySelector('.pw-archive-open');
       if(!open) return;
-      if(open.dataset.office20260915!=='1'){
+      if(open.dataset.office20260916!=='1'){
         const fresh=open.cloneNode(true); open.replaceWith(fresh); open=fresh;
-        open.dataset.office20260915='1'; open.classList.add('pw-office-open-pdf'); open.textContent='APRI PDF';
+        open.dataset.office20260916='1'; open.classList.add('pw-office-open-pdf'); open.textContent='APRI PDF';
         open.addEventListener('click',()=>openPdf(row,open));
       }
       let exp=row.querySelector('.pw-office-export');
-      if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.textContent='ESPORTA PDF';exp.addEventListener('click',()=>exportPdf(row,exp));open.insertAdjacentElement('afterend',exp)}
+      if(!exp){exp=document.createElement('button');exp.type='button';exp.className='pw-office-export';exp.textContent='ESPORTA PDF';exp.title='Nuovo layout PDF';exp.addEventListener('click',()=>exportPdf(row,exp));open.insertAdjacentElement('afterend',exp)}
       if(!row.querySelector('.pw-office-delete')){const del=document.createElement('button');del.type='button';del.className='pw-office-delete';del.textContent='🗑';del.title='Elimina questa commessa dall’archivio';del.addEventListener('click',()=>deleteArchive(row,del));exp.insertAdjacentElement('afterend',del)}
     });
   }
