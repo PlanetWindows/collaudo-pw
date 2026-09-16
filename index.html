@@ -167,8 +167,16 @@ async function loadApp(role) {
 
   s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
 
+  if (role === 'office') {
+    s = s.replace('</head>', `<style id="pw-office-inline-fix">
+      .sheet,.pw-complete-archive-btn{display:none!important}
+      .topbar>strong,.topbar>select,.topbar>button:not(.pw-archive-btn):not(.pw-office-top-switch):not(.pw-office-exit){display:none!important}
+      .topbar{justify-content:flex-end!important;gap:10px!important;min-height:56px!important}
+    </style>\n</head>`);
+  }
+
   const productionScripts = '<script src="sync.js?v=10"><' + '/script><script src="commessa-search.js?v=4"><' + '/script><script src="operator-fix.js?v=5"><' + '/script><script src="signature-ui.js?v=3"><' + '/script><script src="signature-phone.js?v=1"><' + '/script><script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script>';
-  const officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="office-main-20260915.js?v=5"><' + '/script>';
+  const officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="office-prep.js?v=20260916-20"><' + '/script><script src="office-main-20260916.js?v=20260916-20"><' + '/script><script>setTimeout(()=>document.querySelector(\'.pw-archive-overlay\')?.remove(),500);<' + '/script>';
   s = s.replace('</body>', (role === 'office' ? officeScripts : productionScripts) + '\n</body>');
 
   document.open();
