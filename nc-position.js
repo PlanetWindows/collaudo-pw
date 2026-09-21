@@ -101,18 +101,22 @@
     return null;
   }
 
-  function validateBeforeExplicitSave() {
+  function validatePositions(showMessage = false) {
     install();
     const missing = firstMissingPosition();
     if (!missing) return true;
-    alert('Hai selezionato NC. Inserisci la posizione della non conformità prima di salvare il collaudo.');
-    const input = missing.matches?.('input[data-field^="nc_position_"]') ? missing : missing.closest('tr')?.querySelector('input[data-field^="nc_position_"]');
-    if (input) {
-      input.closest('.pw-nc-position-wrap').hidden = false;
-      input.focus();
+    if (showMessage) {
+      alert('Hai selezionato NC. Inserisci la posizione della non conformità prima di salvare il collaudo.');
+      const input = missing.matches?.('input[data-field^="nc_position_"]') ? missing : missing.closest('tr')?.querySelector('input[data-field^="nc_position_"]');
+      if (input) {
+        input.closest('.pw-nc-position-wrap').hidden = false;
+        input.focus();
+      }
     }
     return false;
   }
+
+  window.PWValidateNcPositions = validatePositions;
 
   document.addEventListener('change', e => {
     const input = e.target;
@@ -125,7 +129,7 @@
     if (!button) return;
     const text = String(button.textContent || '').toLowerCase();
     if (!text.includes('salva bozza') && !text.includes('completa e archivia')) return;
-    if (validateBeforeExplicitSave()) return;
+    if (validatePositions(true)) return;
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
