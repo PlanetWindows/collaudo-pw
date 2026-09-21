@@ -175,8 +175,8 @@ async function loadApp(role) {
     </style>\n</head>`);
   }
 
-  const productionScripts = '<script src="sync.js?v=10"><' + '/script><script src="commessa-search.js?v=4"><' + '/script><script src="operator-fix.js?v=5"><' + '/script><script src="signature-ui.js?v=3"><' + '/script><script src="signature-phone.js?v=1"><' + '/script><script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script><script src="nc-position.js?v=20260921-1"><' + '/script>';
-  const officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="office-prep.js?v=20260921-1"><' + '/script><script src="office-main-20260916.js?v=20260916-20"><' + '/script><script>setTimeout(()=>document.querySelector(\'.pw-archive-overlay\')?.remove(),500);<' + '/script>';
+  const productionScripts = '<script src="sync.js?v=11"><' + '/script><script src="commessa-search.js?v=4"><' + '/script><script src="operator-fix.js?v=5"><' + '/script><script src="signature-ui.js?v=3"><' + '/script><script src="signature-phone.js?v=1"><' + '/script><script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script><script src="nc-position.js?v=20260921-2"><' + '/script>';
+  const officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="office-prep.js?v=20260921-2"><' + '/script><script src="office-main-20260916.js?v=20260916-20"><' + '/script><script>setTimeout(()=>document.querySelector(\'.pw-archive-overlay\')?.remove(),500);<' + '/script>';
   s = s.replace('</body>', (role === 'office' ? officeScripts : productionScripts) + '\n</body>');
 
   document.open();
