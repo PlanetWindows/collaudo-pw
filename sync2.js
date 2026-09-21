@@ -291,6 +291,7 @@
     const type = getFormType();
     const commessa = getCommessa();
     if (!type || !commessa || applyingRemote || savingRemote) return;
+    if (typeof window.PWValidateNcPositions === 'function' && !window.PWValidateNcPositions(false)) return;
 
     const key = makeKey(type, commessa);
     if (key !== activeKey) {
