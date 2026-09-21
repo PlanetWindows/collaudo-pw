@@ -5,6 +5,10 @@
   const OFFICE_SESSION_KEY='pw-collaudo-office-code-session';
   const API='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-prep';
   const ESCAPE_TYPES=new Set(['pvc_vie_fuga','alu_vie_fuga']);
+  const ESCAPE_ARTICLES={
+    '1 anta':['Art. 455/T','Art. 403/T','Art. 1100/1/R','Art. 1090'],
+    '2 ante':['Art. 450/T','Art. 402/T','Art. 455/T','Art. 403/T','Art. 1100/1/R','Art. 1090']
+  };
   if(String(localStorage.getItem(ROLE_KEY)||'')!=='office')return;
 
   document.body.classList.add('pw-role-office');
@@ -73,7 +77,7 @@
       </div>
       <div class="pw-office-escape-row" id="pwOfficeEscapeRow" hidden>
         <div class="pw-office-field"><label>TIPOLOGIA</label><select id="pwOfficeTipologia"><option value="">Seleziona tipologia</option><option value="1 anta">1 anta</option><option value="2 ante">2 ante</option></select></div>
-        <div class="pw-office-field"><label>MANIGLIONE</label><input id="pwOfficeManiglione" type="text" autocomplete="off" placeholder="Modello / riferimento maniglione"></div>
+        <div class="pw-office-field"><label>MANIGLIONE</label><input id="pwOfficeManiglione" type="text" autocomplete="off" readonly aria-readonly="true" placeholder="Seleziona prima 1 anta o 2 ante"></div>
       </div>
       <div class="pw-office-actions"><button type="button" class="pw-office-load" id="pwOfficeLoad">Carica commessa</button><button type="button" class="pw-office-save" id="pwOfficeSave">Salva dati Ufficio</button></div>
       <div class="pw-office-status" id="pwOfficeStatus"></div>
@@ -98,7 +102,9 @@
   function formType(){return String(formTypeEl.value||'').trim()}
   function isEscape(){return ESCAPE_TYPES.has(formType())}
   function setStatus(text,error=false){statusEl.textContent=text||'';statusEl.classList.toggle('err',!!error)}
-  function updateConditionalFields(){const yes=isEscape();escapeRow.hidden=!yes;if(!yes){tipologiaEl.value='';maniglioneEl.value=''}}
+  function automaticArticles(){return (ESCAPE_ARTICLES[String(tipologiaEl.value||'')]||[]).join(' · ')}
+  function updateAutomaticArticles(){maniglioneEl.value=isEscape()?automaticArticles():''}
+  function updateConditionalFields(){const yes=isEscape();escapeRow.hidden=!yes;if(!yes){tipologiaEl.value='';maniglioneEl.value=''}else{updateAutomaticArticles()}}
   async function call(body){const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,access_code:officeCode()})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`request_${res.status}`);return data}
   function renderDdt(item){
     current=item||null;const name=String(item?.ddt_name||'');
@@ -109,7 +115,7 @@
   }
   async function load(){
     const c=commessa();if(!c){setStatus('Inserisci il numero di commessa.',true);return}commessaEl.value=c;setStatus('Caricamento…');
-    try{const data=await call({action:'get',commessa:c});const item=data?.item||null;if(item?.form_type)formTypeEl.value=item.form_type;updateConditionalFields();tipologiaEl.value=String(item?.tipologia||'');maniglioneEl.value=String(item?.maniglione||'');renderDdt(item);setStatus(item?'Dati Ufficio caricati.':'Commessa nuova: seleziona il tipo di collaudo e compila i dati.')}
+    try{const data=await call({action:'get',commessa:c});const item=data?.item||null;if(item?.form_type)formTypeEl.value=item.form_type;tipologiaEl.value=String(item?.tipologia||'');updateConditionalFields();renderDdt(item);setStatus(item?'Dati Ufficio caricati.':'Commessa nuova: seleziona il tipo di collaudo e compila i dati.')}
     catch(err){console.error(err);setStatus('Non è stato possibile caricare la commessa.',true)}
   }
   async function save(){
@@ -131,6 +137,7 @@
   async function deleteDdt(){const c=commessa();if(!c||!confirm('Eliminare il DDT allegato a questa commessa?'))return;setStatus('Eliminazione DDT…');try{const data=await call({action:'delete_ddt',commessa:c});renderDdt(data?.item||{form_type:formType(),tipologia:tipologiaEl.value,maniglione:maniglioneEl.value});setStatus('DDT eliminato.')}catch(err){console.error(err);setStatus('Non è stato possibile eliminare il DDT.',true)}}
 
   formTypeEl.addEventListener('change',updateConditionalFields);
+  tipologiaEl.addEventListener('change',updateAutomaticArticles);
   wrap.querySelector('#pwOfficeLoad').addEventListener('click',load);wrap.querySelector('#pwOfficeSave').addEventListener('click',save);wrap.querySelector('#pwDdtAdd').addEventListener('click',()=>fileEl.click());fileEl.addEventListener('change',()=>{const f=fileEl.files?.[0];if(f)uploadDdt(f)});
   commessaEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();load()}});commessaEl.addEventListener('input',()=>{clearTimeout(loadTimer);loadTimer=setTimeout(()=>{if(commessa().length>=2)load()},700)});
   updateConditionalFields();
