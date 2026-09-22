@@ -186,8 +186,10 @@
         }
       });
 
+      const currentKey = makeKey(getFormType(), getCommessa());
+      const keepBlank = !!window.PWCollaudoBlankOutcomeKey && window.PWCollaudoBlankOutcomeKey === currentKey;
       document.querySelectorAll('input[data-group]').forEach(el => {
-        el.checked = !!(payload.esiti && payload.esiti[el.dataset.group] === el.dataset.value);
+        el.checked = keepBlank ? false : !!(payload.esiti && payload.esiti[el.dataset.group] === el.dataset.value);
       });
 
       document.querySelectorAll('img[data-signature]').forEach(img => {
@@ -383,7 +385,13 @@
   document.addEventListener('change', e => {
     const el = e.target;
     if (!(el instanceof HTMLInputElement)) return;
-    if (el.matches('input[data-group], input[data-field]')) queueSave(180);
+    if (el.matches('input[data-group]')) {
+      const key = makeKey(getFormType(), getCommessa());
+      if (window.PWCollaudoBlankOutcomeKey === key) window.PWCollaudoBlankOutcomeKey = '';
+      queueSave(180);
+      return;
+    }
+    if (el.matches('input[data-field]')) queueSave(180);
   }, true);
 
   document.addEventListener('click', e => {
