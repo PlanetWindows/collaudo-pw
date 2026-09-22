@@ -20,15 +20,18 @@
     const commessa=String(item?.commessa||'').trim();
     const type=String(item?.form_type||'').trim();
     if(!commessa||!LABELS[type])throw new Error('invalid_office_commessa');
+    window.PWCollaudoBlankOutcomeKey=`${type}::${commessa.toUpperCase().replace(/\s+/g,' ')}`;
     if(!await switchToType(type,commessa))throw new Error('switch_failed');
 
     const shared=await requestShared(type,commessa,code);
     if(shared.res.ok&&shared.data?.found){
       const payload=shared.data.payload||{};
-      applyPayload(payload);
+      const blankPayload={...payload,esiti:{}};
+      applyPayload(blankPayload);
+      clearOutcomeSelections();
       const currentInput=document.querySelector('input[data-field="commessa"]');
       if(currentInput)currentInput.value=commessa;
-      localStorage.setItem(`pw-collaudo-${type}`,JSON.stringify(payload));
+      localStorage.setItem(`pw-collaudo-${type}`,JSON.stringify(blankPayload));
       setStatus(`Commessa ${commessa} aperta — dati Ufficio e Produzione caricati`,4500);
       setTimeout(()=>{if(window.PWCollaudoSync?.reload)window.PWCollaudoSync.reload()},180);
     }else{
