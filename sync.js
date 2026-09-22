@@ -118,6 +118,7 @@
   ];
 
   const SIGNATURES_URL = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
+  const APOLLO_SIGNATURE_FALLBACK = 'apollo-francesco-signature.svg?v=1';
   const CODE_KEY = 'pw-collaudo-access-code';
   let OPERATOR_SIGNATURES = {};
   let signaturesLoading = false;
@@ -151,7 +152,7 @@
 
   function setOfficialSignature(index, operator) {
     const key = `phase_sign_${index}`;
-    const dataUrl = OPERATOR_SIGNATURES[operator] || '';
+    const dataUrl = OPERATOR_SIGNATURES[operator] || (operator === 'APOLLO FRANCESCO' ? APOLLO_SIGNATURE_FALLBACK : '');
     if (!dataUrl) {
       alert(`Firma non ancora disponibile per ${operator}.`);
       return;
