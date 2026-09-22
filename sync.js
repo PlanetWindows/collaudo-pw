@@ -376,7 +376,7 @@
   }, 900);
 
   const script = document.createElement('script');
-  script.src = 'sync2.js?v=3';
+  script.src = 'sync2.js?v=4';
   script.async = false;
   document.head.appendChild(script);
 })();
