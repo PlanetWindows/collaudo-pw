@@ -178,6 +178,20 @@
           const marker = ensureMarkerInput(row, index);
           saveMarker(marker, markerValue(currentOperator));
           preview.classList.remove('pw-signature-awaiting-plus');
+
+          if (currentOperator === 'APOLLO FRANCESCO') {
+            const key = `phase_sign_${index}`;
+            const currentImg = preview.querySelector('img[data-signature]');
+            const alreadyLoaded = currentImg?.dataset.hasSignature === '1' && !!currentImg.getAttribute('src');
+            if (!alreadyLoaded && typeof setSignatureImage === 'function') {
+              setSignatureImage(key, 'apollo-francesco-signature.svg?v=1');
+              if (typeof autoSave === 'function') autoSave();
+              if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(120);
+            }
+            setTimeout(refreshSignatureUi, 100);
+            return;
+          }
+
           sourceButton.click();
 
           setTimeout(() => {
