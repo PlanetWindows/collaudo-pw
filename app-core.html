@@ -429,6 +429,9 @@ function render() {
   document.querySelectorAll('input[data-field]').forEach(inp => inp.addEventListener('input', autoSave));
   initSignaturePads();
   restoreDraft();
+  document.querySelectorAll('input[data-group]').forEach(el => { el.checked = false; });
+  const blankCommessa = String(document.querySelector('input[data-field="commessa"]')?.value || '').trim().toUpperCase().replace(/\s+/g, ' ');
+  if (blankCommessa) window.PWCollaudoBlankOutcomeKey = `${typeSel.value}::${blankCommessa}`;
 }
 
 function collect() {
