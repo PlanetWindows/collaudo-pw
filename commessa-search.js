@@ -72,7 +72,12 @@
     input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();button.click()}});
     input.addEventListener('input',()=>{
       const current=String(input.value||'').trim().toUpperCase().replace(/\s+/g,' ');
-      if(current!==input.dataset.pwOutcomeCommessa){clearOutcomeSelections();input.dataset.pwOutcomeCommessa=current}
+      if(current!==input.dataset.pwOutcomeCommessa){
+        clearOutcomeSelections();
+        const type=String(document.getElementById('formType')?.value||'').trim();
+        window.PWCollaudoBlankOutcomeKey=current&&type?`${type}::${current}`:'';
+        input.dataset.pwOutcomeCommessa=current;
+      }
       unlockType();
     },true);
   }
