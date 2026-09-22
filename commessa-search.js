@@ -65,8 +65,13 @@
     const cell=input.parentElement;if(!cell||cell.querySelector('.pw-commessa-search-btn'))return;
     cell.classList.add('pw-commessa-search-cell');input.classList.add('pw-commessa-input');
     const button=document.createElement('button');button.type='button';button.className='pw-commessa-search-btn';button.textContent='N° COMMESSA';button.title='Apri direttamente la commessa preparata dall’Ufficio';button.addEventListener('click',()=>searchGenericCommessa(button));cell.appendChild(button);
+    input.dataset.pwOutcomeCommessa=String(input.value||'').trim().toUpperCase().replace(/\s+/g,' ');
     input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();button.click()}});
-    input.addEventListener('input',()=>unlockType());
+    input.addEventListener('input',()=>{
+      const current=String(input.value||'').trim().toUpperCase().replace(/\s+/g,' ');
+      if(current!==input.dataset.pwOutcomeCommessa){clearOutcomeSelections();input.dataset.pwOutcomeCommessa=current}
+      unlockType();
+    },true);
   }
 
   const style=document.createElement('style');style.textContent=`.pw-commessa-search-cell{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;align-items:center!important}.pw-commessa-search-cell .pw-commessa-input{min-width:0!important;width:100%!important}.pw-commessa-search-btn{white-space:nowrap;min-height:34px;padding:6px 10px!important;font-size:11px!important;font-weight:700!important;background:#c7a044!important;color:#111!important;border:1px solid #c7a044!important;border-radius:6px!important}@media(max-width:700px){.pw-commessa-search-btn{min-height:38px;padding:7px 9px!important}}@media print{.pw-commessa-search-btn{display:none!important}.pw-commessa-search-cell{display:block!important}}`;document.head.appendChild(style);
