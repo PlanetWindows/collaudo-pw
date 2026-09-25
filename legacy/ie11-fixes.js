@@ -6,6 +6,12 @@
   var signaturesCache = null;
   var signaturesPromise = null;
   var activeCalendar = null;
+  var PVC_OPERATORS = {
+    pvc: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'APOLLO FRANCESCO', "D'ALESSANDRO DANIELE", 'GOZZI ANDREA', 'GOZZI ANDREA'],
+    pvc_speciali: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'FURLANI ROBERTO', 'FURLANI ROBERTO', 'GOZZI ANDREA', 'GOZZI ANDREA'],
+    pvc_vie_fuga: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'FURLANI ROBERTO', 'FURLANI ROBERTO', 'GOZZI ANDREA', 'GOZZI ANDREA']
+  };
+  var PVC_OPERATOR_LIST = ['GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'ANGELO IDONE', 'APOLLO FRANCESCO', "D'ALESSANDRO DANIELE", 'FURLANI ROBERTO', 'GOZZI ANDREA'];
   function trim(value) {
     return String(value || '').replace(/^\s+|\s+$/g, '');
   }
@@ -215,6 +221,159 @@
       installDatePicker(inputs[i]);
     }
   }
+  function currentFormType() {
+    var select = document.getElementById('formType');
+    return trim(select ? select.value : '');
+  }
+  function isKnownOperator(name) {
+    for (var i = 0; i < PVC_OPERATOR_LIST.length; i++) {
+      if (PVC_OPERATOR_LIST[i] === name) return true;
+    }
+    return false;
+  }
+  function savedOperator(type, index) {
+    try {
+      var raw = localStorage.getItem('pw-collaudo-' + type);
+      if (!raw) return '';
+      var data = JSON.parse(raw);
+      var fields = data && data.fields ? data.fields : {};
+      return trim(fields['phase_operator_' + index]);
+    } catch (_) {
+      return '';
+    }
+  }
+  function findSignatureLabel(resultBox) {
+    var labels = resultBox ? resultBox.getElementsByTagName('label') : [];
+    for (var i = 0; i < labels.length; i++) {
+      if (trim(labels[i].innerText || labels[i].textContent).toLowerCase() === 'firma operatore') {
+        return labels[i];
+      }
+    }
+    return null;
+  }
+  function persistOperatorInput(input) {
+    if (!input) return;
+    dispatchInput(input);
+    if (typeof window.autoSave === 'function') window.autoSave();
+    if (window.PWCollaudoSync && window.PWCollaudoSync.queueSave) {
+      window.PWCollaudoSync.queueSave(120);
+    }
+  }
+  function clearLegacySignature(row, index) {
+    var key = 'phase_sign_' + index;
+    if (typeof window.setSignatureImage === 'function') {
+      window.setSignatureImage(key, '');
+    } else {
+      var img = row.querySelector('img[data-signature="' + key + '"]');
+      if (img) {
+        img.removeAttribute('src');
+        img.setAttribute('data-has-signature', '0');
+        img.style.display = 'none';
+      }
+    }
+    saveMarker(row, index, '');
+    if (typeof window.autoSave === 'function') window.autoSave();
+    if (window.PWCollaudoSync && window.PWCollaudoSync.queueSave) {
+      window.PWCollaudoSync.queueSave(150);
+    }
+  }
+  function buildOperatorBlock(row, index, defaultOperator, currentOperator, signatureLabel) {
+    var resultBox = row.querySelector('.resultbox');
+    if (!resultBox || !signatureLabel) return null;
+    var block = document.createElement('div');
+    block.className = 'pw-associated-operator pw-ie-associated-operator';
+    block.setAttribute('data-operator-index', String(index));
+    block.setAttribute('data-default-operator', defaultOperator);
+    var label = document.createElement('label');
+    label.innerHTML = 'Operatore associato';
+    block.appendChild(label);
+    var operatorRow = document.createElement('div');
+    operatorRow.className = 'pw-operator-row';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'pw-operator-name';
+    nameEl.innerHTML = currentOperator;
+    operatorRow.appendChild(nameEl);
+    var changeButton = document.createElement('button');
+    changeButton.type = 'button';
+    changeButton.className = 'pw-change-operator';
+    changeButton.innerHTML = 'Cambia operatore';
+    operatorRow.appendChild(changeButton);
+    block.appendChild(operatorRow);
+    var select = document.createElement('select');
+    select.className = 'pw-operator-select';
+    select.style.display = 'none';
+    select.setAttribute('aria-label', 'Cambia operatore');
+    for (var i = 0; i < PVC_OPERATOR_LIST.length; i++) {
+      var option = document.createElement('option');
+      option.value = PVC_OPERATOR_LIST[i];
+      option.innerHTML = PVC_OPERATOR_LIST[i];
+      if (PVC_OPERATOR_LIST[i] === currentOperator) option.selected = true;
+      select.appendChild(option);
+    }
+    block.appendChild(select);
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.setAttribute('data-field', 'phase_operator_' + index);
+    hidden.value = currentOperator;
+    block.appendChild(hidden);
+    changeButton.onclick = function () {
+      select.style.display = select.style.display === 'none' ? 'block' : 'none';
+      if (select.style.display !== 'none') {
+        try {
+          select.focus();
+        } catch (_) {}
+      }
+    };
+    select.onchange = function () {
+      var selected = trim(select.value) || defaultOperator;
+      nameEl.innerHTML = selected;
+      hidden.value = selected;
+      select.style.display = 'none';
+      clearLegacySignature(row, index);
+      persistOperatorInput(hidden);
+      setTimeout(fixSignatureLayout, 50);
+    };
+    resultBox.insertBefore(block, signatureLabel);
+    persistOperatorInput(hidden);
+    return block;
+  }
+  function ensureLegacyOperators() {
+    var type = currentFormType();
+    var operators = PVC_OPERATORS[type];
+    if (!operators) return;
+    var rows = document.querySelectorAll('#formArea tbody tr');
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var defaultOperator = operators[i];
+      if (!defaultOperator) continue;
+      var resultBox = row.querySelector('.resultbox');
+      if (!resultBox) continue;
+      var existing = resultBox.querySelector('.pw-associated-operator');
+      if (existing) {
+        existing.style.display = 'block';
+        var existingHidden = existing.querySelector('input[data-field="phase_operator_' + i + '"]');
+        var existingName = existing.querySelector('.pw-operator-name');
+        var existingSelect = existing.querySelector('.pw-operator-select');
+        var value = existingHidden ? trim(existingHidden.value) : '';
+        if (!isKnownOperator(value)) {
+          var stored = savedOperator(type, i);
+          value = isKnownOperator(stored) ? stored : defaultOperator;
+          if (existingHidden) {
+            existingHidden.value = value;
+            persistOperatorInput(existingHidden);
+          }
+        }
+        if (existingName) existingName.innerHTML = value || defaultOperator;
+        if (existingSelect && value) existingSelect.value = value;
+        continue;
+      }
+      var signatureLabel = findSignatureLabel(resultBox);
+      if (!signatureLabel) continue;
+      var storedOperator = savedOperator(type, i);
+      var currentOperator = isKnownOperator(storedOperator) ? storedOperator : defaultOperator;
+      buildOperatorBlock(row, i, defaultOperator, currentOperator, signatureLabel);
+    }
+  }
   function loadSignatures() {
     if (signaturesCache) return Promise.resolve(signaturesCache);
     if (signaturesPromise) return signaturesPromise;
@@ -353,7 +512,7 @@
   function installStyles() {
     var style = document.createElement('style');
     style.type = 'text/css';
-    style.innerHTML = '.pw-ie-date-wrap{display:flex;width:100%;align-items:stretch;box-sizing:border-box;}' + '.pw-ie-date-wrap>input{width:auto!important;min-width:0;flex:1 1 auto;box-sizing:border-box;}' + '.pw-ie-date-button{flex:0 0 42px;margin-left:4px;border:1px solid #aaa;border-radius:6px;background:#fff;font-size:10px;font-weight:700;cursor:pointer;}' + '.pw-ie-calendar{position:absolute;z-index:99999;width:244px;background:#fff;border:1px solid #777;box-shadow:0 5px 18px rgba(0,0,0,.25);padding:8px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#111;}' + '.pw-ie-calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}' + '.pw-ie-calendar-header button{width:32px;height:28px;border:1px solid #aaa;background:#fff;cursor:pointer;}' + '.pw-ie-calendar-header strong{font-size:13px;text-align:center;}' + '.pw-ie-calendar-table{width:100%;border-collapse:collapse;margin:0!important;}' + '.pw-ie-calendar-table th,.pw-ie-calendar-table td{border:0!important;padding:1px!important;text-align:center!important;width:14.28%!important;}' + '.pw-ie-calendar-table th{background:#f1eee8!important;font-size:10px!important;height:22px!important;}' + '.pw-ie-calendar-day{width:28px;height:28px;padding:0!important;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:11px;}' + '.pw-ie-calendar-day:hover,.pw-ie-calendar-day.selected{background:#e8dcc0;font-weight:700;}' + '.pw-ie-calendar-empty{height:30px;}' + '.pw-ie-calendar-footer{display:flex;justify-content:space-between;margin-top:6px;}' + '.pw-ie-calendar-footer button{padding:5px 8px;border:1px solid #aaa;background:#fff;cursor:pointer;font-size:11px;}' + '@media print{.pw-ie-date-button,.pw-ie-calendar{display:none!important;}.pw-ie-date-wrap{display:block!important;}.pw-ie-date-wrap>input{width:100%!important;}}';
+    style.innerHTML = '.pw-ie-associated-operator{display:block!important;margin:7px 0 5px!important;}' + '.pw-ie-associated-operator>label{display:block!important;font-size:11px!important;margin-bottom:3px!important;}' + '.pw-ie-associated-operator .pw-operator-row{display:flex!important;align-items:center!important;width:100%!important;}' + '.pw-ie-associated-operator .pw-operator-name{display:block!important;flex:1 1 auto!important;min-width:0!important;padding:6px 7px!important;border:1px solid #bbb!important;border-radius:5px!important;background:#f7f7f7!important;font-size:10px!important;font-weight:700!important;white-space:normal!important;line-height:1.15!important;}' + '.pw-ie-associated-operator .pw-change-operator{flex:0 0 auto!important;margin-left:4px!important;padding:5px 6px!important;border:1px solid #aaa!important;border-radius:5px!important;background:#fff!important;font-size:8px!important;cursor:pointer!important;}' + '.pw-ie-associated-operator .pw-operator-select{display:none;width:100%!important;margin-top:4px!important;padding:5px!important;border:1px solid #aaa!important;background:#fff!important;font-size:10px!important;}' + '.pw-ie-date-wrap{display:flex;width:100%;align-items:stretch;box-sizing:border-box;}' + '.pw-ie-date-wrap>input{width:auto!important;min-width:0;flex:1 1 auto;box-sizing:border-box;}' + '.pw-ie-date-button{flex:0 0 42px;margin-left:4px;border:1px solid #aaa;border-radius:6px;background:#fff;font-size:10px;font-weight:700;cursor:pointer;}' + '.pw-ie-calendar{position:absolute;z-index:99999;width:244px;background:#fff;border:1px solid #777;box-shadow:0 5px 18px rgba(0,0,0,.25);padding:8px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#111;}' + '.pw-ie-calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}' + '.pw-ie-calendar-header button{width:32px;height:28px;border:1px solid #aaa;background:#fff;cursor:pointer;}' + '.pw-ie-calendar-header strong{font-size:13px;text-align:center;}' + '.pw-ie-calendar-table{width:100%;border-collapse:collapse;margin:0!important;}' + '.pw-ie-calendar-table th,.pw-ie-calendar-table td{border:0!important;padding:1px!important;text-align:center!important;width:14.28%!important;}' + '.pw-ie-calendar-table th{background:#f1eee8!important;font-size:10px!important;height:22px!important;}' + '.pw-ie-calendar-day{width:28px;height:28px;padding:0!important;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:11px;}' + '.pw-ie-calendar-day:hover,.pw-ie-calendar-day.selected{background:#e8dcc0;font-weight:700;}' + '.pw-ie-calendar-empty{height:30px;}' + '.pw-ie-calendar-footer{display:flex;justify-content:space-between;margin-top:6px;}' + '.pw-ie-calendar-footer button{padding:5px 8px;border:1px solid #aaa;background:#fff;cursor:pointer;font-size:11px;}' + '@media print{.pw-ie-date-button,.pw-ie-calendar,.pw-ie-associated-operator .pw-change-operator,.pw-ie-associated-operator .pw-operator-select{display:none!important;}.pw-ie-date-wrap{display:block!important;}.pw-ie-date-wrap>input{width:100%!important;}.pw-ie-associated-operator{display:block!important;}}';
     document.head.appendChild(style);
   }
   document.addEventListener('click', function (e) {
@@ -387,9 +546,11 @@
   }, true);
   installStyles();
   installDatePickers();
+  ensureLegacyOperators();
   fixSignatureLayout();
   setInterval(function () {
     installDatePickers();
+    ensureLegacyOperators();
     fixSignatureLayout();
   }, 500);
 })();
