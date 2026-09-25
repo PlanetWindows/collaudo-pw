@@ -122,6 +122,7 @@ async function renderRolePage(role, runtimeCode, appCoreSource) {
 `;
 
   written = written.replace('</head>', guard + '\n</head>');
+  written = written.replace('</body>', '<script src="ie11-fixes.js?v=1"></script>\\n</body>');
   return transformInlineScripts(written, 'app-' + role + '.html');
 }
 
