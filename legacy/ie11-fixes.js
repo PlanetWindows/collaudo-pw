@@ -6,6 +6,7 @@
   var signaturesCache = null;
   var signaturesPromise = null;
   var activeCalendar = null;
+  var fixedSignatureLocks = {};
   var PVC_OPERATORS = {
     pvc: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'APOLLO FRANCESCO', "D'ALESSANDRO DANIELE", 'GOZZI ANDREA', 'GOZZI ANDREA'],
     pvc_speciali: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'FURLANI ROBERTO', 'FURLANI ROBERTO', 'GOZZI ANDREA', 'GOZZI ANDREA'],
@@ -260,6 +261,7 @@
     }
   }
   function clearLegacySignature(row, index) {
+    removeFixedSignatureOverlay(row, index);
     var key = 'phase_sign_' + index;
     if (typeof window.setSignatureImage === 'function') {
       window.setSignatureImage(key, '');
@@ -431,6 +433,50 @@
       window.PWCollaudoSync.queueSave(120);
     }
   }
+  function signatureLockKey(index) {
+    return currentFormType() + '::' + index;
+  }
+  function removeFixedSignatureOverlay(row, index) {
+    delete fixedSignatureLocks[signatureLockKey(index)];
+    if (!row) return;
+    var preview = row.querySelector('.signature-preview');
+    if (!preview) return;
+    var overlay = preview.querySelector('.pw-ie-signature-fixed');
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+  function setFixedSignatureOverlay(row, index, operator, dataUrl) {
+    if (!row || !dataUrl) return;
+    var preview = row.querySelector('.signature-preview');
+    if (!preview) return;
+    fixedSignatureLocks[signatureLockKey(index)] = {
+      operator: operator,
+      dataUrl: dataUrl
+    };
+    var overlay = preview.querySelector('.pw-ie-signature-fixed');
+    if (!overlay) {
+      overlay = document.createElement('img');
+      overlay.className = 'pw-ie-signature-fixed';
+      overlay.alt = 'Firma operatore';
+      preview.appendChild(overlay);
+    }
+    if (overlay.src !== dataUrl) overlay.src = dataUrl;
+    overlay.style.display = 'block';
+  }
+  function ensureFixedSignatureOverlays() {
+    var rows = document.querySelectorAll('#formArea tbody tr');
+    for (var i = 0; i < rows.length; i++) {
+      var lock = fixedSignatureLocks[signatureLockKey(i)];
+      if (!lock) continue;
+      var row = rows[i];
+      var operatorInput = row.querySelector('input[data-field="phase_operator_' + i + '"]');
+      var currentOperator = trim(operatorInput ? operatorInput.value : '');
+      if (!currentOperator || currentOperator !== lock.operator) {
+        removeFixedSignatureOverlay(row, i);
+        continue;
+      }
+      setFixedSignatureOverlay(row, i, lock.operator, lock.dataUrl);
+    }
+  }
   function setLegacySignature(row, index, operator, dataUrl) {
     var key = 'phase_sign_' + index;
     if (typeof window.setSignatureImage === 'function') {
@@ -443,6 +489,7 @@
       img.style.display = 'block';
     }
     saveMarker(row, index, operator);
+    setFixedSignatureOverlay(row, index, operator, dataUrl);
     if (typeof window.autoSave === 'function') window.autoSave();
     if (window.PWCollaudoSync && window.PWCollaudoSync.queueSave) {
       window.PWCollaudoSync.queueSave(120);
@@ -512,13 +559,28 @@
   function installStyles() {
     var style = document.createElement('style');
     style.type = 'text/css';
-    style.innerHTML = '.pw-ie-associated-operator{display:block!important;margin:7px 0 5px!important;}' + '.pw-ie-associated-operator>label{display:block!important;font-size:11px!important;margin-bottom:3px!important;}' + '.pw-ie-associated-operator .pw-operator-row{display:flex!important;align-items:center!important;width:100%!important;}' + '.pw-ie-associated-operator .pw-operator-name{display:block!important;flex:1 1 auto!important;min-width:0!important;padding:6px 7px!important;border:1px solid #bbb!important;border-radius:5px!important;background:#f7f7f7!important;font-size:10px!important;font-weight:700!important;white-space:normal!important;line-height:1.15!important;}' + '.pw-ie-associated-operator .pw-change-operator{flex:0 0 auto!important;margin-left:4px!important;padding:5px 6px!important;border:1px solid #aaa!important;border-radius:5px!important;background:#fff!important;font-size:8px!important;cursor:pointer!important;}' + '.pw-ie-associated-operator .pw-operator-select{display:none;width:100%!important;margin-top:4px!important;padding:5px!important;border:1px solid #aaa!important;background:#fff!important;font-size:10px!important;}' + '.pw-ie-date-wrap{display:flex;width:100%;align-items:stretch;box-sizing:border-box;}' + '.pw-ie-date-wrap>input{width:auto!important;min-width:0;flex:1 1 auto;box-sizing:border-box;}' + '.pw-ie-date-button{flex:0 0 42px;margin-left:4px;border:1px solid #aaa;border-radius:6px;background:#fff;font-size:10px;font-weight:700;cursor:pointer;}' + '.pw-ie-calendar{position:absolute;z-index:99999;width:244px;background:#fff;border:1px solid #777;box-shadow:0 5px 18px rgba(0,0,0,.25);padding:8px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#111;}' + '.pw-ie-calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}' + '.pw-ie-calendar-header button{width:32px;height:28px;border:1px solid #aaa;background:#fff;cursor:pointer;}' + '.pw-ie-calendar-header strong{font-size:13px;text-align:center;}' + '.pw-ie-calendar-table{width:100%;border-collapse:collapse;margin:0!important;}' + '.pw-ie-calendar-table th,.pw-ie-calendar-table td{border:0!important;padding:1px!important;text-align:center!important;width:14.28%!important;}' + '.pw-ie-calendar-table th{background:#f1eee8!important;font-size:10px!important;height:22px!important;}' + '.pw-ie-calendar-day{width:28px;height:28px;padding:0!important;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:11px;}' + '.pw-ie-calendar-day:hover,.pw-ie-calendar-day.selected{background:#e8dcc0;font-weight:700;}' + '.pw-ie-calendar-empty{height:30px;}' + '.pw-ie-calendar-footer{display:flex;justify-content:space-between;margin-top:6px;}' + '.pw-ie-calendar-footer button{padding:5px 8px;border:1px solid #aaa;background:#fff;cursor:pointer;font-size:11px;}' + '@media print{.pw-ie-date-button,.pw-ie-calendar,.pw-ie-associated-operator .pw-change-operator,.pw-ie-associated-operator .pw-operator-select{display:none!important;}.pw-ie-date-wrap{display:block!important;}.pw-ie-date-wrap>input{width:100%!important;}.pw-ie-associated-operator{display:block!important;}}';
+    style.innerHTML = '.pw-ie-signature-fixed{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;object-fit:contain!important;z-index:4!important;pointer-events:none!important;background:#fff!important;}' + '.pw-ie-associated-operator{display:block!important;margin:7px 0 5px!important;}' + '.pw-ie-associated-operator>label{display:block!important;font-size:11px!important;margin-bottom:3px!important;}' + '.pw-ie-associated-operator .pw-operator-row{display:flex!important;align-items:center!important;width:100%!important;}' + '.pw-ie-associated-operator .pw-operator-name{display:block!important;flex:1 1 auto!important;min-width:0!important;padding:6px 7px!important;border:1px solid #bbb!important;border-radius:5px!important;background:#f7f7f7!important;font-size:10px!important;font-weight:700!important;white-space:normal!important;line-height:1.15!important;}' + '.pw-ie-associated-operator .pw-change-operator{flex:0 0 auto!important;margin-left:4px!important;padding:5px 6px!important;border:1px solid #aaa!important;border-radius:5px!important;background:#fff!important;font-size:8px!important;cursor:pointer!important;}' + '.pw-ie-associated-operator .pw-operator-select{display:none;width:100%!important;margin-top:4px!important;padding:5px!important;border:1px solid #aaa!important;background:#fff!important;font-size:10px!important;}' + '.pw-ie-date-wrap{display:flex;width:100%;align-items:stretch;box-sizing:border-box;}' + '.pw-ie-date-wrap>input{width:auto!important;min-width:0;flex:1 1 auto;box-sizing:border-box;}' + '.pw-ie-date-button{flex:0 0 42px;margin-left:4px;border:1px solid #aaa;border-radius:6px;background:#fff;font-size:10px;font-weight:700;cursor:pointer;}' + '.pw-ie-calendar{position:absolute;z-index:99999;width:244px;background:#fff;border:1px solid #777;box-shadow:0 5px 18px rgba(0,0,0,.25);padding:8px;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#111;}' + '.pw-ie-calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}' + '.pw-ie-calendar-header button{width:32px;height:28px;border:1px solid #aaa;background:#fff;cursor:pointer;}' + '.pw-ie-calendar-header strong{font-size:13px;text-align:center;}' + '.pw-ie-calendar-table{width:100%;border-collapse:collapse;margin:0!important;}' + '.pw-ie-calendar-table th,.pw-ie-calendar-table td{border:0!important;padding:1px!important;text-align:center!important;width:14.28%!important;}' + '.pw-ie-calendar-table th{background:#f1eee8!important;font-size:10px!important;height:22px!important;}' + '.pw-ie-calendar-day{width:28px;height:28px;padding:0!important;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:11px;}' + '.pw-ie-calendar-day:hover,.pw-ie-calendar-day.selected{background:#e8dcc0;font-weight:700;}' + '.pw-ie-calendar-empty{height:30px;}' + '.pw-ie-calendar-footer{display:flex;justify-content:space-between;margin-top:6px;}' + '.pw-ie-calendar-footer button{padding:5px 8px;border:1px solid #aaa;background:#fff;cursor:pointer;font-size:11px;}' + '@media print{.pw-ie-date-button,.pw-ie-calendar,.pw-ie-associated-operator .pw-change-operator,.pw-ie-associated-operator .pw-operator-select{display:none!important;}.pw-ie-date-wrap{display:block!important;}.pw-ie-date-wrap>input{width:100%!important;}.pw-ie-associated-operator{display:block!important;}}';
     document.head.appendChild(style);
   }
   document.addEventListener('click', function (e) {
     e = e || window.event;
     var target = e.target || e.srcElement;
     var node = target;
+    var clickButton = node;
+    while (clickButton && clickButton !== document && clickButton.tagName !== 'BUTTON') {
+      clickButton = clickButton.parentNode;
+    }
+    if (clickButton && clickButton.tagName === 'BUTTON') {
+      var buttonText = trim(clickButton.innerText || clickButton.textContent).toLowerCase();
+      if (buttonText.indexOf('rimuovi firma') >= 0) {
+        var removeRow = closestTag(clickButton, 'TR');
+        if (removeRow) {
+          var removeIndex = rowIndex(removeRow);
+          if (removeIndex >= 0) removeFixedSignatureOverlay(removeRow, removeIndex);
+        }
+      }
+    }
+    node = target;
     while (node && node !== document) {
       if (hasClass(node, 'pw-signature-plus-proxy')) {
         if (e.preventDefault) e.preventDefault();
@@ -548,9 +610,26 @@
   installDatePickers();
   ensureLegacyOperators();
   fixSignatureLayout();
+  ensureFixedSignatureOverlays();
+  document.addEventListener('change', function (e) {
+    e = e || window.event;
+    var target = e.target || e.srcElement;
+    if (!target || !hasClass(target, 'pw-operator-select')) return;
+    var row = closestTag(target, 'TR');
+    if (!row) return;
+    var index = rowIndex(row);
+    if (index >= 0) removeFixedSignatureOverlay(row, index);
+  }, true);
+  var formTypeSelect = document.getElementById('formType');
+  if (formTypeSelect) {
+    formTypeSelect.addEventListener('change', function () {
+      fixedSignatureLocks = {};
+    });
+  }
   setInterval(function () {
     installDatePickers();
     ensureLegacyOperators();
     fixSignatureLayout();
+    ensureFixedSignatureOverlays();
   }, 500);
 })();
