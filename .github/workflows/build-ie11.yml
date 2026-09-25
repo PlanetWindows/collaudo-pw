@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - ie11-compat
+      - ie11-date-signature-fix
     paths-ignore:
       - 'legacy/**'
 
