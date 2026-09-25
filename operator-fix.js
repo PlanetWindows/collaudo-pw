@@ -40,7 +40,7 @@
   document.head.appendChild(apolloSignatureScript);
 
   const officePrepProductionScript = document.createElement('script');
-  officePrepProductionScript.src = 'production-office-prep.js?v=4';
+  officePrepProductionScript.src = 'production-office-prep.js?v=5';
   officePrepProductionScript.async = false;
   document.head.appendChild(officePrepProductionScript);
 
