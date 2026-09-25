@@ -24,7 +24,7 @@
 </head>
 <body>
 <div id="boot" class="loading">Caricamento PW Collaudo…</div>
-<script>
+<script id="pw-modern-code" type="text/pw-modern">
 const ACCESS_API = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
 const ROLE_KEY = 'pw-collaudo-role';
 const DEPT_CODE_KEY = 'pw-collaudo-access-code';
@@ -211,6 +211,28 @@ boot().catch(err => {
   console.error(err);
   document.body.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif"><b>Impossibile caricare PW Collaudo.</b><br>Ricarica la pagina.</div>';
 });
+</script>
+<script id="pw-compat-loader">
+(function () {
+  var isIE11 = !!document.documentMode;
+  if (isIE11) {
+    var boot = document.getElementById('boot');
+    if (boot) boot.innerHTML = 'Apertura modalità compatibile…';
+    window.location.replace('legacy/index.html');
+    return;
+  }
+
+  var holder = document.getElementById('pw-modern-code');
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  var source = holder.text || holder.textContent || holder.innerHTML || '';
+  try {
+    script.text = source;
+  } catch (e) {
+    script.appendChild(document.createTextNode(source));
+  }
+  document.body.appendChild(script);
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+{
+  "name": "pw-collaudo-ie11-build",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build:ie11": "node scripts/build-ie11.cjs"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "core-js-bundle": "^3.45.0",
+    "whatwg-fetch": "^3.6.20"
+  }
+}

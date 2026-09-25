@@ -1,0 +1,45 @@
+name: Build IE11 compatibility
+
+on:
+  push:
+    branches:
+      - main
+      - ie11-compat
+    paths-ignore:
+      - 'legacy/**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-ie11:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install build dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate IE11 build
+        run: npm run build:ie11
+
+      - name: Commit generated compatibility files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add legacy
+          if git diff --cached --quiet; then
+            echo "IE11 build already up to date."
+            exit 0
+          fi
+          git commit -m "build: refresh IE11 compatibility [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
