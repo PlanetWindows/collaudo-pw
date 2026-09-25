@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PW Collaudo - Planet Windows</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">
+<style>
+  html,body{margin:0;min-height:100%;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;color:#111}
+  .loading{padding:24px;color:#555}
+  .access-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+  .access-card{width:min(430px,100%);background:#fff;border-radius:16px;box-shadow:0 18px 55px rgba(0,0,0,.14);padding:28px;box-sizing:border-box}
+  .access-brand{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b6c1e;margin-bottom:8px}
+  .access-card h1{font-size:26px;margin:0 0 8px}
+  .access-card p{margin:0 0 20px;color:#666;line-height:1.45;font-size:14px}
+  .access-card label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
+  .access-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+  .access-row input{min-width:0;border:1px solid #bbb;border-radius:9px;padding:12px 13px;font-size:15px;text-transform:uppercase}
+  .access-row button{border:1px solid #c7a044;background:#c7a044;color:#111;border-radius:9px;padding:11px 18px;font-weight:700;cursor:pointer}
+  .access-error{min-height:20px;margin-top:10px;color:#a31818;font-size:12px}
+  .access-note{margin-top:18px!important;font-size:12px!important;color:#888!important}
+  @media(max-width:520px){.access-row{grid-template-columns:1fr}.access-row button{min-height:44px}.access-card{padding:22px}}
+</style>
+<script src="polyfills.js?v=1"></script>
+</head>
+<body>
+<div id="boot" class="loading">Caricamento PW Collaudo…</div>
+<script>
+function _regenerator() { var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+var ACCESS_API = 'https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-sync';
+var ROLE_KEY = 'pw-collaudo-role';
+var DEPT_CODE_KEY = 'pw-collaudo-access-code';
+var OFFICE_LOCAL_KEY = 'pw-collaudo-office-code';
+var OFFICE_SESSION_KEY = 'pw-collaudo-office-code-session';
+function replaceOnce(source, oldText, newText, label) {
+  if (!source.includes(oldText)) throw new Error('Blocco non trovato: ' + label);
+  return source.replace(oldText, newText);
+}
+function clearAccess() {
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem(DEPT_CODE_KEY);
+  localStorage.removeItem(OFFICE_LOCAL_KEY);
+  sessionStorage.removeItem(OFFICE_SESSION_KEY);
+}
+function storedCodeForRole(role) {
+  if (role === 'production') return String(localStorage.getItem(DEPT_CODE_KEY) || '').trim();
+  if (role === 'office') return String(localStorage.getItem(OFFICE_LOCAL_KEY) || '').trim();
+  return '';
+}
+function saveAccess(role, code) {
+  clearAccess();
+  localStorage.setItem(ROLE_KEY, role);
+  if (role === 'production') {
+    localStorage.setItem(DEPT_CODE_KEY, code);
+  } else if (role === 'office') {
+    localStorage.setItem(OFFICE_LOCAL_KEY, code);
+    sessionStorage.setItem(OFFICE_SESSION_KEY, code);
+  }
+}
+function validateAccess(_x) {
+  return _validateAccess.apply(this, arguments);
+}
+function _validateAccess() {
+  _validateAccess = _asyncToGenerator(_regenerator().m(function _callee2(code) {
+    var res, data, _t2;
+    return _regenerator().w(function (_context2) {
+      while (1) switch (_context2.p = _context2.n) {
+        case 0:
+          _context2.n = 1;
+          return fetch(ACCESS_API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              action: 'access_check',
+              access_code: code
+            })
+          });
+        case 1:
+          res = _context2.v;
+          data = {};
+          _context2.p = 2;
+          _context2.n = 3;
+          return res.json();
+        case 3:
+          data = _context2.v;
+          _context2.n = 5;
+          break;
+        case 4:
+          _context2.p = 4;
+          _t2 = _context2.v;
+        case 5:
+          if (!(res.status === 401)) {
+            _context2.n = 6;
+            break;
+          }
+          return _context2.a(2, {
+            ok: false,
+            invalid: true
+          });
+        case 6:
+          if (res.ok) {
+            _context2.n = 7;
+            break;
+          }
+          throw new Error(data.error || "access_".concat(res.status));
+        case 7:
+          return _context2.a(2, {
+            ok: true,
+            role: data.role || ''
+          });
+      }
+    }, _callee2, null, [[2, 4]]);
+  }));
+  return _validateAccess.apply(this, arguments);
+}
+function showAccess() {
+  var root = document.getElementById('boot');
+  root.className = '';
+  root.innerHTML = "\n    <div class=\"access-wrap\">\n      <div class=\"access-card\">\n        <div class=\"access-brand\">Planet Windows</div>\n        <h1>PW Collaudo</h1>\n        <p>Inserisci il codice di accesso. Il sistema aprir\xE0 automaticamente l'area Produzione oppure l'area Ufficio.</p>\n        <label for=\"pwAccessCode\">Codice di accesso</label>\n        <div class=\"access-row\">\n          <input id=\"pwAccessCode\" type=\"text\" autocomplete=\"off\" autocapitalize=\"characters\" spellcheck=\"false\" placeholder=\"Inserisci codice\">\n          <button id=\"pwAccessBtn\" type=\"button\">Accedi</button>\n        </div>\n        <div id=\"pwAccessError\" class=\"access-error\"></div>\n        <p class=\"access-note\">Il codice resta memorizzato su questo PC finch\xE9 non scegli \u201CCambia accesso\u201D.</p>\n      </div>\n    </div>";
+  var input = document.getElementById('pwAccessCode');
+  var button = document.getElementById('pwAccessBtn');
+  var error = document.getElementById('pwAccessError');
+  function submit() {
+    return _submit.apply(this, arguments);
+  }
+  function _submit() {
+    _submit = _asyncToGenerator(_regenerator().m(function _callee() {
+      var code, result, _t;
+      return _regenerator().w(function (_context) {
+        while (1) switch (_context.p = _context.n) {
+          case 0:
+            code = String(input.value || '').trim().toUpperCase();
+            if (code) {
+              _context.n = 1;
+              break;
+            }
+            error.textContent = 'Inserisci il codice di accesso.';
+            input.focus();
+            return _context.a(2);
+          case 1:
+            button.disabled = true;
+            button.textContent = 'Verifica…';
+            error.textContent = '';
+            _context.p = 2;
+            _context.n = 3;
+            return validateAccess(code);
+          case 3:
+            result = _context.v;
+            if (!(!result.ok || !['production', 'office'].includes(result.role))) {
+              _context.n = 4;
+              break;
+            }
+            error.textContent = 'Codice non valido.';
+            input.select();
+            return _context.a(2);
+          case 4:
+            saveAccess(result.role, code);
+            _context.n = 5;
+            return loadApp(result.role);
+          case 5:
+            _context.n = 7;
+            break;
+          case 6:
+            _context.p = 6;
+            _t = _context.v;
+            console.error(_t);
+            error.textContent = 'Connessione non disponibile. Riprova.';
+          case 7:
+            _context.p = 7;
+            button.disabled = false;
+            button.textContent = 'Accedi';
+            return _context.f(7);
+          case 8:
+            return _context.a(2);
+        }
+      }, _callee, null, [[2, 6, 7, 8]]);
+    }));
+    return _submit.apply(this, arguments);
+  }
+  button.addEventListener('click', submit);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') submit();
+  });
+  input.focus();
+}
+function loadApp(_x2) {
+  return _loadApp.apply(this, arguments);
+}
+function _loadApp() {
+  _loadApp = _asyncToGenerator(_regenerator().m(function _callee3(role) {
+    var s, oldStart, oldEnd, newSignatureJs, productionScripts, officeScripts;
+    return _regenerator().w(function (_context3) {
+      while (1) switch (_context3.n) {
+        case 0:
+          _context3.n = 1;
+          return fetch('app-core.html', {
+            cache: 'no-store'
+          }).then(function (r) {
+            if (!r.ok) throw new Error('Impossibile caricare la scheda base');
+            return r.text();
+          });
+        case 1:
+          s = _context3.v;
+          s = replaceOnce(s, ".signature-pad{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  touch-action:none;\n  cursor:crosshair;\n  display:block;\n}", ".signature-preview{\n  width:100%;\n  height:95px;\n  border:1px solid #bbb;\n  border-radius:6px;\n  background:#fff;\n  display:flex;\n  align-items:center;\n  justify-content:center;\n  overflow:hidden;\n  padding:4px;\n}\n.signature-image{\n  max-width:100%;\n  max-height:100%;\n  width:auto;\n  height:auto;\n  object-fit:contain;\n  display:none;\n}\n.signature-empty{\n  font-size:12px;\n  color:#888;\n  text-align:center;\n}", 'stile firma');
+          s = replaceOnce(s, "  .signature-pad{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n  }", "  .signature-preview{\n    width:100%!important;\n    height:15mm!important;\n    border:0.2mm solid #aaa!important;\n    border-radius:0!important;\n    background:#fff!important;\n    padding:0!important;\n  }\n  .signature-image{\n    max-width:100%!important;\n    max-height:100%!important;\n    width:auto!important;\n    height:auto!important;\n    object-fit:contain!important;\n  }\n  .signature-empty{\n    display:none!important;\n  }", 'stile stampa firma');
+          s = replaceOnce(s, "            <label>Firma Operatore</label>\n            <div class=\"signature-wrap\">\n              <canvas class=\"signature-pad\" data-signature=\"phase_sign_${i}\" aria-label=\"Firma operatore\"></canvas>\n              <div class=\"signature-actions\">\n                <button type=\"button\" onclick=\"clearSignature('phase_sign_${i}')\">Cancella firma</button>\n                <span class=\"signature-placeholder\">Firma con dito, penna touch o mouse</span>\n              </div>\n            </div>", "            <label>Firma Operatore</label>\n            <div class=\"signature-wrap\">\n              <div class=\"signature-preview\">\n                <img class=\"signature-image\" data-signature=\"phase_sign_${i}\" alt=\"Firma operatore\">\n                <span class=\"signature-empty\" data-signature-placeholder=\"phase_sign_${i}\">Nessuna firma allegata</span>\n              </div>\n              <input type=\"file\" data-signature-input=\"phase_sign_${i}\" accept=\"image/png,image/jpeg,image/webp\" hidden onchange=\"loadSignatureFile('phase_sign_${i}', this)\">\n              <div class=\"signature-actions\">\n                <button type=\"button\" onclick=\"chooseSignature('phase_sign_${i}')\">Allega / cambia firma</button>\n                <button type=\"button\" onclick=\"clearSignature('phase_sign_${i}')\">Rimuovi firma</button>\n                <span class=\"signature-placeholder\">PNG, JPG o WEBP</span>\n              </div>\n            </div>", 'controlli firma');
+          s = replaceOnce(s, "  initSignaturePads();\n  restoreDraft();", "  restoreDraft();", 'inizializzazione firma');
+          s = replaceOnce(s, "  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    data.signatures[canvas.dataset.signature] = canvas.dataset.hasInk === '1'\n      ? canvas.toDataURL('image/png')\n      : '';\n  });", "  document.querySelectorAll('img[data-signature]').forEach(img => {\n    data.signatures[img.dataset.signature] = img.dataset.hasSignature === '1'\n      ? img.src\n      : '';\n  });", 'salvataggio firma');
+          s = replaceOnce(s, "  document.querySelectorAll('canvas[data-signature]').forEach(canvas => {\n    const saved = data.signatures && data.signatures[canvas.dataset.signature];\n    if (saved) {\n      drawSavedSignature(canvas, saved);\n    }\n  });", "  document.querySelectorAll('img[data-signature]').forEach(img => {\n    const saved = data.signatures && data.signatures[img.dataset.signature];\n    setSignatureImage(img.dataset.signature, saved || '');\n  });", 'ripristino firma');
+          oldStart = s.indexOf('function setupCanvasSize(canvas) {');
+          oldEnd = s.indexOf('\n\nfunction saveDraft(show=true) {', oldStart);
+          if (!(oldStart < 0 || oldEnd < 0)) {
+            _context3.n = 2;
+            break;
+          }
+          throw new Error('Blocco funzioni firma non trovato');
+        case 2:
+          newSignatureJs = "function setSignatureImage(key, dataUrl) {\n  const img = document.querySelector(`img[data-signature=\"${key}\"]`);\n  const empty = document.querySelector(`[data-signature-placeholder=\"${key}\"]`);\n  if (!img) return;\n\n  if (dataUrl) {\n    img.src = dataUrl;\n    img.dataset.hasSignature = '1';\n    img.style.display = 'block';\n    if (empty) empty.style.display = 'none';\n  } else {\n    img.removeAttribute('src');\n    img.dataset.hasSignature = '0';\n    img.style.display = 'none';\n    if (empty) empty.style.display = '';\n  }\n}\n\nfunction chooseSignature(key) {\n  const input = document.querySelector(`input[data-signature-input=\"${key}\"]`);\n  if (!input) return;\n  input.value = '';\n  input.click();\n}\n\nfunction normalizeSignatureImage(dataUrl) {\n  return new Promise((resolve, reject) => {\n    const img = new Image();\n    img.onload = () => {\n      const maxW = 900;\n      const maxH = 300;\n      const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);\n      const canvas = document.createElement('canvas');\n      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));\n      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));\n      const ctx = canvas.getContext('2d');\n      ctx.clearRect(0, 0, canvas.width, canvas.height);\n      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);\n      resolve(canvas.toDataURL('image/png'));\n    };\n    img.onerror = reject;\n    img.src = dataUrl;\n  });\n}\n\nfunction loadSignatureFile(key, input) {\n  const file = input.files && input.files[0];\n  if (!file) return;\n\n  const allowed = ['image/png', 'image/jpeg', 'image/webp'];\n  if (!allowed.includes(file.type)) {\n    alert('Seleziona una firma in formato PNG, JPG o WEBP.');\n    input.value = '';\n    return;\n  }\n\n  const reader = new FileReader();\n  reader.onload = async () => {\n    try {\n      const dataUrl = await normalizeSignatureImage(reader.result);\n      setSignatureImage(key, dataUrl);\n      autoSave();\n      statusEl.textContent = 'Firma allegata';\n      setTimeout(() => statusEl.textContent = '', 1800);\n    } catch (e) {\n      alert('Non \xE8 stato possibile leggere il file della firma.');\n    }\n  };\n  reader.onerror = () => alert('Non \xE8 stato possibile leggere il file della firma.');\n  reader.readAsDataURL(file);\n}\n\nfunction clearSignature(key) {\n  setSignatureImage(key, '');\n  const input = document.querySelector(`input[data-signature-input=\"${key}\"]`);\n  if (input) input.value = '';\n  autoSave();\n}";
+          s = s.slice(0, oldStart) + newSignatureJs + s.slice(oldEnd);
+          s = replaceOnce(s, "if (!confirm('Vuoi cancellare tutti i dati di questa scheda e iniziarne una nuova?')) return;", "if (!confirm('Creare una nuova scheda? Tutti i dati attualmente compilati verranno azzerati. Assicurati di aver salvato la bozza prima di continuare.')) return;", 'conferma nuova scheda');
+          if (!(!s.includes('Allega / cambia firma') || s.includes('Firma con dito, penna touch o mouse') || s.includes('initSignaturePads'))) {
+            _context3.n = 3;
+            break;
+          }
+          throw new Error('Verifica finale modifica firma non superata');
+        case 3:
+          s = s.replace('</head>', '<link rel="icon" type="image/x-icon" href="favicon.ico?v=2">\n</head>');
+          if (role === 'office') {
+            s = s.replace('</head>', "<style id=\"pw-office-inline-fix\">\n      .sheet,.pw-complete-archive-btn{display:none!important}\n      .topbar>strong,.topbar>select,.topbar>button:not(.pw-archive-btn):not(.pw-office-top-switch):not(.pw-office-exit){display:none!important}\n      .topbar{justify-content:flex-end!important;gap:10px!important;min-height:56px!important}\n    </style>\n</head>");
+          }
+          productionScripts = '<script src="sync.js?v=13"><' + '/script><script src="commessa-search.js?v=8"><' + '/script><script src="operator-fix.js?v=6"><' + '/script><script src="signature-ui.js?v=4"><' + '/script><script src="signature-phone.js?v=1"><' + '/script><script src="archive.js?v=2"><' + '/script><script src="role-ui.js?v=1"><' + '/script><script src="nc-position.js?v=20260921-2"><' + '/script>';
+          officeScripts = '<script src="archive.js?v=2"><' + '/script><script src="office-prep.js?v=20260925-1"><' + '/script><script src="office-main-20260916.js?v=20260916-20"><' + '/script><script>setTimeout(()=>document.querySelector(\'.pw-archive-overlay\')?.remove(),500);<' + '/script>';
+          s = s.replace('</body>', (role === 'office' ? officeScripts : productionScripts) + '\n</body>');
+          document.open();
+          document.write(s);
+          document.close();
+        case 4:
+          return _context3.a(2);
+      }
+    }, _callee3);
+  }));
+  return _loadApp.apply(this, arguments);
+}
+function boot() {
+  return _boot.apply(this, arguments);
+}
+function _boot() {
+  _boot = _asyncToGenerator(_regenerator().m(function _callee4() {
+    var role, code, result, _t3;
+    return _regenerator().w(function (_context4) {
+      while (1) switch (_context4.p = _context4.n) {
+        case 0:
+          role = String(localStorage.getItem(ROLE_KEY) || '').trim();
+          code = storedCodeForRole(role);
+          if (!(['production', 'office'].includes(role) && code)) {
+            _context4.n = 7;
+            break;
+          }
+          if (role === 'office') sessionStorage.setItem(OFFICE_SESSION_KEY, code);
+          _context4.p = 1;
+          _context4.n = 2;
+          return validateAccess(code);
+        case 2:
+          result = _context4.v;
+          if (!(result.ok && result.role === role)) {
+            _context4.n = 4;
+            break;
+          }
+          _context4.n = 3;
+          return loadApp(role);
+        case 3:
+          return _context4.a(2);
+        case 4:
+          clearAccess();
+          _context4.n = 7;
+          break;
+        case 5:
+          _context4.p = 5;
+          _t3 = _context4.v;
+          console.warn('Verifica accesso non disponibile, uso accesso memorizzato.', _t3);
+          _context4.n = 6;
+          return loadApp(role);
+        case 6:
+          return _context4.a(2);
+        case 7:
+          showAccess();
+        case 8:
+          return _context4.a(2);
+      }
+    }, _callee4, null, [[1, 5]]);
+  }));
+  return _boot.apply(this, arguments);
+}
+boot().catch(function (err) {
+  console.error(err);
+  document.body.innerHTML = '<div style="padding:24px;font-family:Arial,sans-serif"><b>Impossibile caricare PW Collaudo.</b><br>Ricarica la pagina.</div>';
+});
+</script>
+</body>
+</html>
