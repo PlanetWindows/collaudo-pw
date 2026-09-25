@@ -6,6 +6,7 @@
   var signaturesCache = null;
   var signaturesPromise = null;
   var activeCalendar = null;
+  var fixedSignatureLocks = {};
 
   var PVC_OPERATORS = {
     pvc: [
@@ -335,6 +336,7 @@
   }
 
   function clearLegacySignature(row, index) {
+    removeFixedSignatureOverlay(row, index);
     var key = 'phase_sign_' + index;
     if (typeof window.setSignatureImage === 'function') {
       window.setSignatureImage(key, '');
@@ -525,6 +527,57 @@
     }
   }
 
+  function signatureLockKey(index) {
+    return currentFormType() + '::' + index;
+  }
+
+  function removeFixedSignatureOverlay(row, index) {
+    delete fixedSignatureLocks[signatureLockKey(index)];
+    if (!row) return;
+    var preview = row.querySelector('.signature-preview');
+    if (!preview) return;
+    var overlay = preview.querySelector('.pw-ie-signature-fixed');
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+
+  function setFixedSignatureOverlay(row, index, operator, dataUrl) {
+    if (!row || !dataUrl) return;
+    var preview = row.querySelector('.signature-preview');
+    if (!preview) return;
+
+    fixedSignatureLocks[signatureLockKey(index)] = {
+      operator: operator,
+      dataUrl: dataUrl
+    };
+
+    var overlay = preview.querySelector('.pw-ie-signature-fixed');
+    if (!overlay) {
+      overlay = document.createElement('img');
+      overlay.className = 'pw-ie-signature-fixed';
+      overlay.alt = 'Firma operatore';
+      preview.appendChild(overlay);
+    }
+    if (overlay.src !== dataUrl) overlay.src = dataUrl;
+    overlay.style.display = 'block';
+  }
+
+  function ensureFixedSignatureOverlays() {
+    var rows = document.querySelectorAll('#formArea tbody tr');
+    for (var i = 0; i < rows.length; i++) {
+      var lock = fixedSignatureLocks[signatureLockKey(i)];
+      if (!lock) continue;
+
+      var row = rows[i];
+      var operatorInput = row.querySelector('input[data-field="phase_operator_' + i + '"]');
+      var currentOperator = trim(operatorInput ? operatorInput.value : '');
+      if (!currentOperator || currentOperator !== lock.operator) {
+        removeFixedSignatureOverlay(row, i);
+        continue;
+      }
+      setFixedSignatureOverlay(row, i, lock.operator, lock.dataUrl);
+    }
+  }
+
   function setLegacySignature(row, index, operator, dataUrl) {
     var key = 'phase_sign_' + index;
     if (typeof window.setSignatureImage === 'function') {
@@ -538,6 +591,7 @@
     }
 
     saveMarker(row, index, operator);
+    setFixedSignatureOverlay(row, index, operator, dataUrl);
 
     if (typeof window.autoSave === 'function') window.autoSave();
     if (window.PWCollaudoSync && window.PWCollaudoSync.queueSave) {
@@ -623,6 +677,7 @@
     var style = document.createElement('style');
     style.type = 'text/css';
     style.innerHTML =
+      '.pw-ie-signature-fixed{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;object-fit:contain!important;z-index:4!important;pointer-events:none!important;background:#fff!important;}' +
       '.pw-ie-associated-operator{display:block!important;margin:7px 0 5px!important;}' +
       '.pw-ie-associated-operator>label{display:block!important;font-size:11px!important;margin-bottom:3px!important;}' +
       '.pw-ie-associated-operator .pw-operator-row{display:flex!important;align-items:center!important;width:100%!important;}' +
@@ -653,6 +708,22 @@
     var target = e.target || e.srcElement;
 
     var node = target;
+    var clickButton = node;
+    while (clickButton && clickButton !== document && clickButton.tagName !== 'BUTTON') {
+      clickButton = clickButton.parentNode;
+    }
+    if (clickButton && clickButton.tagName === 'BUTTON') {
+      var buttonText = trim(clickButton.innerText || clickButton.textContent).toLowerCase();
+      if (buttonText.indexOf('rimuovi firma') >= 0) {
+        var removeRow = closestTag(clickButton, 'TR');
+        if (removeRow) {
+          var removeIndex = rowIndex(removeRow);
+          if (removeIndex >= 0) removeFixedSignatureOverlay(removeRow, removeIndex);
+        }
+      }
+    }
+
+    node = target;
     while (node && node !== document) {
       if (hasClass(node, 'pw-signature-plus-proxy')) {
         if (e.preventDefault) e.preventDefault();
@@ -684,10 +755,29 @@
   installDatePickers();
   ensureLegacyOperators();
   fixSignatureLayout();
+  ensureFixedSignatureOverlays();
+
+  document.addEventListener('change', function (e) {
+    e = e || window.event;
+    var target = e.target || e.srcElement;
+    if (!target || !hasClass(target, 'pw-operator-select')) return;
+    var row = closestTag(target, 'TR');
+    if (!row) return;
+    var index = rowIndex(row);
+    if (index >= 0) removeFixedSignatureOverlay(row, index);
+  }, true);
+
+  var formTypeSelect = document.getElementById('formType');
+  if (formTypeSelect) {
+    formTypeSelect.addEventListener('change', function () {
+      fixedSignatureLocks = {};
+    });
+  }
 
   setInterval(function () {
     installDatePickers();
     ensureLegacyOperators();
     fixSignatureLayout();
+    ensureFixedSignatureOverlays();
   }, 500);
 })();
