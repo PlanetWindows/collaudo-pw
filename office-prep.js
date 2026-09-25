@@ -4,6 +4,7 @@
   const OFFICE_LOCAL_KEY='pw-collaudo-office-code';
   const OFFICE_SESSION_KEY='pw-collaudo-office-code-session';
   const API='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-prep';
+  const LOTTO_API='https://vbpinzygwexuvwomnmbt.supabase.co/functions/v1/collaudo-office-lotto';
   const ESCAPE_TYPES=new Set(['pvc_vie_fuga','alu_vie_fuga']);
   const ESCAPE_ARTICLES={
     '1 anta':['Art. 455/T','Art. 403/T','Art. 1100/1/R','Art. 1090'],
@@ -26,7 +27,7 @@
     .pw-office-prep{max-width:980px;margin:26px auto;padding:0 18px 30px;box-sizing:border-box}
     .pw-office-prep-card{background:#fff;border:1px solid #ddd;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.08);padding:22px}
     .pw-office-prep h2{margin:0 0 5px;font-size:22px}.pw-office-prep .sub{color:#666;font-size:13px;margin-bottom:20px;line-height:1.45}
-    .pw-office-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pw-office-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
+    .pw-office-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.pw-office-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}
     .pw-office-field input,.pw-office-field select{width:100%;box-sizing:border-box;border:1px solid #bbb;border-radius:8px;padding:11px 12px;font-size:14px;background:#fff}
     .pw-office-escape-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.pw-office-escape-row[hidden]{display:none!important}
     .pw-office-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:16px}
@@ -74,6 +75,7 @@
       <div class="pw-office-grid">
         <div class="pw-office-field"><label>TIPO DI COLLAUDO</label><select id="pwOfficeFormType"><option value="">Seleziona tipo</option><option value="pvc">PVC</option><option value="pvc_speciali">PVC - Pezzi speciali</option><option value="pvc_vie_fuga">PVC - Vie di fuga</option><option value="alu">Alluminio</option><option value="alu_speciali">Alluminio - Pezzi speciali</option><option value="alu_vie_fuga">Alluminio - Vie di fuga</option></select></div>
         <div class="pw-office-field"><label>NUMERO DI COMMESSA</label><input id="pwOfficeCommessa" type="text" autocomplete="off" placeholder="Es. 2222"></div>
+        <div class="pw-office-field"><label>NUMERO LOTTO</label><input id="pwOfficeLotto" type="text" autocomplete="off" placeholder="Inserisci numero lotto"></div>
       </div>
       <div class="pw-office-escape-row" id="pwOfficeEscapeRow" hidden>
         <div class="pw-office-field"><label>TIPOLOGIA</label><select id="pwOfficeTipologia"><option value="">Seleziona tipologia</option><option value="1 anta">1 anta</option><option value="2 ante">2 ante</option></select></div>
@@ -88,6 +90,7 @@
 
   const formTypeEl=wrap.querySelector('#pwOfficeFormType');
   const commessaEl=wrap.querySelector('#pwOfficeCommessa');
+  const lottoEl=wrap.querySelector('#pwOfficeLotto');
   const escapeRow=wrap.querySelector('#pwOfficeEscapeRow');
   const tipologiaEl=wrap.querySelector('#pwOfficeTipologia');
   const maniglioneEl=wrap.querySelector('#pwOfficeManiglione');
@@ -99,6 +102,7 @@
 
   function officeCode(){const code=String(localStorage.getItem(OFFICE_LOCAL_KEY)||sessionStorage.getItem(OFFICE_SESSION_KEY)||'').trim();if(code&&!sessionStorage.getItem(OFFICE_SESSION_KEY))sessionStorage.setItem(OFFICE_SESSION_KEY,code);return code}
   function commessa(){return String(commessaEl.value||'').trim().toUpperCase().replace(/\s+/g,' ')}
+  function lotto(){return String(lottoEl.value||'').trim()}
   function formType(){return String(formTypeEl.value||'').trim()}
   function isEscape(){return ESCAPE_TYPES.has(formType())}
   function setStatus(text,error=false){statusEl.textContent=text||'';statusEl.classList.toggle('err',!!error)}
@@ -106,6 +110,7 @@
   function updateAutomaticArticles(){maniglioneEl.value=isEscape()?automaticArticles():''}
   function updateConditionalFields(){const yes=isEscape();escapeRow.hidden=!yes;if(!yes){tipologiaEl.value='';maniglioneEl.value=''}else{updateAutomaticArticles()}}
   async function call(body){const res=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,access_code:officeCode()})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`request_${res.status}`);return data}
+  async function callLotto(body){const res=await fetch(LOTTO_API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,access_code:officeCode()})});let data={};try{data=await res.json()}catch(_){ }if(!res.ok)throw new Error(data?.error||`lotto_${res.status}`);return data}
   function renderDdt(item){
     current=item||null;const name=String(item?.ddt_name||'');
     if(!name){ddtMeta.textContent='Nessun DDT allegato.';ddtActions.innerHTML='<button type="button" class="pw-ddt-add" id="pwDdtAdd">+ Allega DDT</button>';ddtActions.querySelector('#pwDdtAdd').addEventListener('click',()=>fileEl.click());return}
@@ -115,14 +120,14 @@
   }
   async function load(){
     const c=commessa();if(!c){setStatus('Inserisci il numero di commessa.',true);return}commessaEl.value=c;setStatus('Caricamento…');
-    try{const data=await call({action:'get',commessa:c});const item=data?.item||null;if(item?.form_type)formTypeEl.value=item.form_type;tipologiaEl.value=String(item?.tipologia||'');updateConditionalFields();renderDdt(item);setStatus(item?'Dati Ufficio caricati.':'Commessa nuova: seleziona il tipo di collaudo e compila i dati.')}
+    try{const data=await call({action:'get',commessa:c});const item=data?.item||null;if(item?.form_type)formTypeEl.value=item.form_type;tipologiaEl.value=String(item?.tipologia||'');updateConditionalFields();renderDdt(item);try{const lot=await callLotto({action:'get',commessa:c});lottoEl.value=String(lot?.lotto||'')}catch(lottoErr){console.error('Numero lotto',lottoErr);lottoEl.value=''}setStatus(item?'Dati Ufficio caricati.':'Commessa nuova: seleziona il tipo di collaudo e compila i dati.')}
     catch(err){console.error(err);setStatus('Non è stato possibile caricare la commessa.',true)}
   }
   async function save(){
     const c=commessa(),t=formType();if(!c){setStatus('Inserisci il numero di commessa.',true);return}if(!t){setStatus('Seleziona il tipo di collaudo.',true);formTypeEl.focus();return}
     if(isEscape()&&!tipologiaEl.value){setStatus('Per le vie di fuga seleziona la tipologia: 1 anta o 2 ante.',true);tipologiaEl.focus();return}
     commessaEl.value=c;setStatus('Salvataggio…');
-    try{const data=await call({action:'save',commessa:c,form_type:t,tipologia:isEscape()?tipologiaEl.value:'',maniglione:isEscape()?maniglioneEl.value:''});renderDdt(data?.item||current);setStatus('Dati Ufficio salvati. In Produzione basta cercare questa commessa.')}
+    try{const data=await call({action:'save',commessa:c,form_type:t,tipologia:isEscape()?tipologiaEl.value:'',maniglione:isEscape()?maniglioneEl.value:''});renderDdt(data?.item||current);try{await callLotto({action:'save',commessa:c,lotto:lotto()})}catch(lottoErr){console.error('Numero lotto',lottoErr);setStatus('Dati Ufficio salvati, ma il numero lotto non è stato salvato.',true);return}setStatus('Dati Ufficio salvati. In Produzione basta cercare questa commessa.')}
     catch(err){console.error(err);setStatus('Non è stato possibile salvare.',true)}
   }
   function fileBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.onerror=reject;r.readAsDataURL(file)})}
