@@ -15,7 +15,7 @@
     localStorage.removeItem(DEPT_CODE_KEY);
     localStorage.removeItem(OFFICE_LOCAL_KEY);
     sessionStorage.removeItem(OFFICE_SESSION_KEY);
-    location.reload();
+    location.href = 'index.html';
   }
   function installSwitchButton() {
     var topbar = document.querySelector('.topbar');
