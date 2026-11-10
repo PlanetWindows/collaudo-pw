@@ -261,6 +261,19 @@
     if (ms) setTimeout(() => { if (el.textContent === message) el.textContent = ''; }, ms);
   }
 
+  function readyToArchive() {
+    const rows = [...document.querySelectorAll('#formArea tbody tr')];
+    if (!rows.length) return false;
+    const missing = rows.findIndex((row,index) =>
+      !row.querySelector('input[data-group="esito_' + index + '"]:checked'));
+    if (missing >= 0) {
+      alert('Completa Conforme / Non conforme per ogni fase prima di archiviare. Manca la fase ' + (missing + 1) + '.');
+      return false;
+    }
+    if (typeof window.PWValidateNcPositions === 'function' && !window.PWValidateNcPositions(true)) return false;
+    return true;
+  }
+
   async function completeAndArchive(button) {
     const commessa = getCommessa();
     const formType = getType();
@@ -269,6 +282,7 @@
       return;
     }
 
+    if (!readyToArchive()) return;
     if (!confirm(`Confermi che il collaudo della commessa ${commessa} è completato e pronto per l’archivio?`)) return;
 
     const code = getDeptCode();
@@ -330,6 +344,17 @@
     return new Intl.DateTimeFormat('it-IT', {
       day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
     }).format(d);
+  }
+
+  function archiveWeek(dateValue) {
+    const value = new Date(dateValue);
+    if (!Number.isFinite(value.getTime())) return 'Data non disponibile';
+    const day = new Date(Date.UTC(value.getUTCFullYear(),value.getUTCMonth(),value.getUTCDate()));
+    day.setUTCDate(day.getUTCDate() + 4 - (day.getUTCDay() || 7));
+    const year = day.getUTCFullYear();
+    const first = new Date(Date.UTC(year,0,1));
+    const week = Math.ceil((((day - first) / 86400000) + 1) / 7);
+    return 'Settimana ' + String(week).padStart(2,'0') + ' · ' + year;
   }
 
   function printCss() {
@@ -456,7 +481,17 @@
       }
 
       list.innerHTML = '';
+      let lastWeek = '';
       items.forEach(item => {
+        const week = archiveWeek(item.completed_at);
+        if (week !== lastWeek) {
+          lastWeek = week;
+          const title = document.createElement('div');
+          title.className = 'pw-archive-week-title';
+          title.textContent = week;
+          title.style.cssText = 'font-weight:700;margin:14px 0 6px;padding:7px 10px;background:#f4f0e7;border-left:3px solid #c7a044;border-radius:3px';
+          list.appendChild(title);
+        }
         const row = document.createElement('div');
         row.className = 'pw-archive-row';
         row.innerHTML = `
