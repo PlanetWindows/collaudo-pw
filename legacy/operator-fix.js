@@ -4,7 +4,7 @@
   mobileStyle.href = 'mobile.css?v=2';
   document.head.appendChild(mobileStyle);
   var archiveScript = document.createElement('script');
-  archiveScript.src = 'archive.js?v=3';
+  archiveScript.src = 'archive.js?v=4';
   archiveScript.async = false;
   document.head.appendChild(archiveScript);
   var archiveCloseFixScript = document.createElement('script');
