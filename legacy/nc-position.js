@@ -39,11 +39,6 @@
     if ((_window$PWCollaudoSyn = window.PWCollaudoSync) !== null && _window$PWCollaudoSyn !== void 0 && _window$PWCollaudoSyn.queueSave) window.PWCollaudoSync.queueSave(120);
   }
   function ensureRow(row, index) {
-    if (isEscapeType()) {
-      var _row$querySelector;
-      (_row$querySelector = row.querySelector('.pw-nc-position-wrap')) === null || _row$querySelector === void 0 || _row$querySelector.remove();
-      return;
-    }
     var nc = row.querySelector("input[data-group=\"esito_".concat(index, "\"][data-value=\"NC\"]"));
     if (!nc) return;
     var checks = nc.closest('.inlinechecks');
@@ -77,7 +72,6 @@
     });
   }
   function firstMissingPosition() {
-    if (isEscapeType()) return null;
     var rows = document.querySelectorAll('#formArea tbody tr');
     for (var index = 0; index < rows.length; index++) {
       var row = rows[index];

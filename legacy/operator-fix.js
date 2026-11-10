@@ -1,4 +1,4 @@
-(function (_document$getElementB2) {
+(function () {
   var mobileStyle = document.createElement('link');
   mobileStyle.rel = 'stylesheet';
   mobileStyle.href = 'mobile.css?v=2';
@@ -35,11 +35,7 @@
   officePrepProductionScript.src = 'production-office-prep.js?v=5';
   officePrepProductionScript.async = false;
   document.head.appendChild(officePrepProductionScript);
-
-  // Aggiorna soltanto il vecchio operatore inserito automaticamente nelle bozze vuote.
-  // Le schede con dati compilati e le selezioni manuali successive rimangono invariate.
   var DEFAULT_MIGRATION_KEY = 'pw-collaudo-default-angelo-20261110-v2';
-
   function migrateBlankApolloDefault() {
     var formType = document.getElementById('formType');
     if (!formType || formType.value !== 'pvc') return;
@@ -53,7 +49,6 @@
     var nameEl = block.querySelector('.pw-operator-name');
     var select = block.querySelector('.pw-operator-select');
     if (!hidden || !nameEl || !select) return;
-
     var existing = null;
     try {
       var raw = localStorage.getItem('pw-collaudo-pvc');
@@ -62,9 +57,7 @@
     var fields = existing && existing.fields ? existing.fields : {};
     var filled = false;
     for (var field in fields) {
-      if (Object.prototype.hasOwnProperty.call(fields, field) &&
-          !/^phase_operator_/.test(field) &&
-          String(fields[field] || '').replace(/^\s+|\s+$/g, '') !== '') {
+      if (Object.prototype.hasOwnProperty.call(fields, field) && !/^phase_operator_/.test(field) && String(fields[field] || '').replace(/^\s+|\s+$/g, '') !== '') {
         filled = true;
         break;
       }
@@ -76,7 +69,6 @@
         break;
       }
     }
-    // Non trattare la firma di Apollo come lavoro compilato: era inserita automaticamente.
     if (!filled && String(hidden.value || '').replace(/^\s+|\s+$/g, '') === 'APOLLO FRANCESCO') {
       hidden.value = 'ANGELO IDONE';
       nameEl.textContent = 'ANGELO IDONE';
