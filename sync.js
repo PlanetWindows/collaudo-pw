@@ -287,7 +287,7 @@
       if (existing) return;
 
       const signatureLabel = Array.from(resultBox.querySelectorAll('label'))
-        .find(label => (label.textContent || '').trim().toLowerCase() === 'firma operatore');
+        .find(label => (label.textContent || '').trim().toLowerCase().startsWith('firma operatore'));
       if (!signatureLabel) return;
 
       const fieldName = `phase_operator_${index}`;
