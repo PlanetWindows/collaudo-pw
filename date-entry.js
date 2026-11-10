@@ -17,7 +17,7 @@
   document.head.appendChild(style);
 
   function formatItalian(iso) {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(iso || ''))) return '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return '';
     return iso.slice(8,10) + '/' + iso.slice(5,7) + '/' + iso.slice(0,4);
   }
 
@@ -25,13 +25,13 @@
     const value = String(raw || '').trim();
     if (!value) return '';
     let day, month, year;
-    const match = value.match(/^(\\d{1,2})[./-](\\d{1,2})[./-](\\d{4})$/);
-    const compact = value.match(/^(\\d{2})(\\d{2})(\\d{4})$/);
+    const match = value.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    const compact = value.match(/^(\d{2})(\d{2})(\d{4})$/);
     if (match) {
       day = Number(match[1]); month = Number(match[2]); year = Number(match[3]);
     } else if (compact) {
       day = Number(compact[1]); month = Number(compact[2]); year = Number(compact[3]);
-    } else if (/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) {
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       year = Number(value.slice(0,4));month = Number(value.slice(5,7));day = Number(value.slice(8,10));
     } else {
       return null;
