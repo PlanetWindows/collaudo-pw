@@ -25,7 +25,7 @@
   document.head.appendChild(zipScript);
 
   const aluExtensionScript = document.createElement('script');
-  aluExtensionScript.src = 'alu-extension.js?v=2';
+  aluExtensionScript.src = 'alu-extension.js?v=3';
   aluExtensionScript.async = false;
   document.head.appendChild(aluExtensionScript);
 
