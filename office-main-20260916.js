@@ -27,8 +27,41 @@
   function officeCode(){const code=String(localStorage.getItem(OFFICE_LOCAL_KEY)||sessionStorage.getItem(OFFICE_SESSION_KEY)||'').trim();if(code&&!sessionStorage.getItem(OFFICE_SESSION_KEY))sessionStorage.setItem(OFFICE_SESSION_KEY,code);return code}
   function rowCommessa(row){return String(row.querySelector('.pw-archive-commessa')?.textContent||'').replace(/^\s*Commessa\s*/i,'').trim()}
   function changeAccess(){if(!confirm('Vuoi uscire dall’area Ufficio e inserire un altro codice di accesso?'))return;localStorage.removeItem(ROLE_KEY);localStorage.removeItem(DEPT_CODE_KEY);localStorage.removeItem(OFFICE_LOCAL_KEY);sessionStorage.removeItem(OFFICE_SESSION_KEY);location.replace(location.pathname+'?access='+Date.now())}
-  function closeArchive(){document.querySelector('.pw-archive-overlay')?.remove()}
-  function installTopSwitch(){const topbar=document.querySelector('.topbar');if(!topbar||topbar.querySelector('.pw-office-top-switch'))return;const b=document.createElement('button');b.type='button';b.className='pw-office-top-switch';b.textContent='Cambia accesso';b.addEventListener('click',changeAccess);topbar.appendChild(b)}
+  function closeArchive(){const overlay=document.querySelector('.pw-archive-overlay');if(overlay)overlay.hidden=true}
+  function installTopSwitch(){
+    const topbar=document.querySelector('.topbar');
+    if(!topbar)return;
+    let archive=topbar.querySelector('.pw-archive-btn');
+    if(!archive){
+      archive=document.createElement('button');
+      archive.type='button';
+      archive.className='pw-archive-btn';
+      const status=topbar.querySelector('.status');
+      if(status)topbar.insertBefore(archive,status);else topbar.appendChild(archive);
+    }
+    // Il pulsante punta sempre all'archivio reale, senza duplicare gli eventi.
+    if(archive.dataset.pwOfficeArchiveFix!=='1'){
+      const fixed=archive.cloneNode(true);
+      archive.replaceWith(fixed);
+      archive=fixed;
+      archive.dataset.pwOfficeArchiveFix='1';
+      archive.textContent='Archivio ufficio';
+      archive.addEventListener('click',()=>{
+        if(typeof window.PWOpenCollaudoArchive!=='function'){
+          alert('Archivio non disponibile. Ricarica la pagina e riprova.');return;
+        }
+        Promise.resolve(window.PWOpenCollaudoArchive()).catch(err=>{
+          console.error('Apertura Archivio Ufficio',err);
+          alert('Impossibile aprire l’archivio. Riprova.');
+        });
+      });
+    }
+    if(!topbar.querySelector('.pw-office-top-switch')){
+      const b=document.createElement('button');
+      b.type='button';b.className='pw-office-top-switch';b.textContent='Cambia accesso';
+      b.addEventListener('click',changeAccess);topbar.appendChild(b);
+    }
+  }
   function installArchiveHeader(){const overlay=document.querySelector('.pw-archive-overlay'),head=overlay?.querySelector('.pw-archive-head');if(!overlay||!head||head.querySelector('.pw-office-head-actions'))return;head.querySelector('.pw-archive-close')?.remove();const actions=document.createElement('div');actions.className='pw-office-head-actions';const close=document.createElement('button');close.type='button';close.className='pw-office-close-archive';close.textContent='Chiudi archivio';close.addEventListener('click',closeArchive);const change=document.createElement('button');change.type='button';change.className='pw-office-switch-access';change.textContent='Cambia accesso';change.addEventListener('click',changeAccess);actions.append(close,change);head.appendChild(actions)}
   function filenameFromDisposition(v,fallback){const m=String(v||'').match(/filename="?([^";]+)"?/i);return m?.[1]||fallback}
 
