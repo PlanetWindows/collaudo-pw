@@ -258,16 +258,6 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         setTimeout(refresh, 220);
       }
     }
-    if (el instanceof HTMLInputElement && el.matches('input[data-group][data-value]') && el.checked) {
-      var _row = el.closest('tr');
-      var _index = Array.from(document.querySelectorAll('#formArea tbody tr')).indexOf(_row);
-      var date = _row === null || _row === void 0 ? void 0 : _row.querySelector('input[data-field="phase_date_' + _index + '"]');
-      if (date && !date.value) {
-        var now = new Date();
-        date.value = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
-        persist(date);
-      }
-    }
   }, true);
   function addManualPdfButton() {
     var footer = document.querySelector('.footer-actions');
