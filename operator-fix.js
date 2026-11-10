@@ -5,7 +5,7 @@
   document.head.appendChild(mobileStyle);
 
   const archiveScript = document.createElement('script');
-  archiveScript.src = 'archive.js?v=1';
+  archiveScript.src = 'archive.js?v=3';
   archiveScript.async = false;
   document.head.appendChild(archiveScript);
 
