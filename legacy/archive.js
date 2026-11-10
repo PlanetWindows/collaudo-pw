@@ -1,5 +1,11 @@
 function _regenerator() { var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 (function () {
@@ -161,6 +167,19 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       if (el.textContent === message) el.textContent = '';
     }, ms);
   }
+  function readyToArchive() {
+    var rows = _toConsumableArray(document.querySelectorAll('#formArea tbody tr'));
+    if (!rows.length) return false;
+    var missing = rows.findIndex(function (row, index) {
+      return !row.querySelector('input[data-group="esito_' + index + '"]:checked');
+    });
+    if (missing >= 0) {
+      alert('Completa Conforme / Non conforme per ogni fase prima di archiviare. Manca la fase ' + (missing + 1) + '.');
+      return false;
+    }
+    if (typeof window.PWValidateNcPositions === 'function' && !window.PWValidateNcPositions(true)) return false;
+    return true;
+  }
   function completeAndArchive(_x2) {
     return _completeAndArchive.apply(this, arguments);
   }
@@ -179,41 +198,47 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             alert('Inserisci prima il numero di commessa.');
             return _context2.a(2);
           case 1:
-            if (confirm("Confermi che il collaudo della commessa ".concat(commessa, " \xE8 completato e pronto per l\u2019archivio?"))) {
+            if (readyToArchive()) {
               _context2.n = 2;
               break;
             }
             return _context2.a(2);
           case 2:
-            code = getDeptCode();
-            if (code) {
+            if (confirm("Confermi che il collaudo della commessa ".concat(commessa, " \xE8 completato e pronto per l\u2019archivio?"))) {
               _context2.n = 3;
               break;
             }
             return _context2.a(2);
           case 3:
+            code = getDeptCode();
+            if (code) {
+              _context2.n = 4;
+              break;
+            }
+            return _context2.a(2);
+          case 4:
             oldText = button.textContent;
             button.disabled = true;
             button.textContent = 'Archiviazione…';
-            _context2.p = 4;
+            _context2.p = 5;
             if (!((_window$PWCollaudoSyn = window.PWCollaudoSync) !== null && _window$PWCollaudoSyn !== void 0 && _window$PWCollaudoSyn.saveNow)) {
-              _context2.n = 8;
+              _context2.n = 9;
               break;
             }
-            _context2.p = 5;
-            _context2.n = 6;
+            _context2.p = 6;
+            _context2.n = 7;
             return window.PWCollaudoSync.saveNow();
-          case 6:
-            _context2.n = 8;
-            break;
           case 7:
-            _context2.p = 7;
-            _t2 = _context2.v;
+            _context2.n = 9;
+            break;
           case 8:
+            _context2.p = 8;
+            _t2 = _context2.v;
+          case 9:
             payload = collectPayload();
             payload.archive_html = makeArchiveSnapshot();
             payload.archived_at = new Date().toISOString();
-            _context2.n = 9;
+            _context2.n = 10;
             return api({
               action: 'archive_complete',
               code: code,
@@ -221,17 +246,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               commessa: commessa,
               payload: payload
             });
-          case 9:
+          case 10:
             button.textContent = 'Archiviato ✓';
             setStatus('Collaudo salvato nell’archivio ✓', 3500);
             setTimeout(function () {
               button.disabled = false;
               button.textContent = oldText;
             }, 2500);
-            _context2.n = 11;
+            _context2.n = 12;
             break;
-          case 10:
-            _context2.p = 10;
+          case 11:
+            _context2.p = 11;
             _t3 = _context2.v;
             console.error('Archivio collaudo', _t3);
             if (String(_t3.message).includes('invalid_code')) {
@@ -242,10 +267,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             button.disabled = false;
             button.textContent = oldText;
-          case 11:
+          case 12:
             return _context2.a(2);
         }
-      }, _callee2, null, [[5, 7], [4, 10]]);
+      }, _callee2, null, [[6, 8], [5, 11]]);
     }));
     return _completeAndArchive.apply(this, arguments);
   }
@@ -268,6 +293,16 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       hour: '2-digit',
       minute: '2-digit'
     }).format(d);
+  }
+  function archiveWeek(dateValue) {
+    var value = new Date(dateValue);
+    if (!Number.isFinite(value.getTime())) return 'Data non disponibile';
+    var day = new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+    day.setUTCDate(day.getUTCDate() + 4 - (day.getUTCDay() || 7));
+    var year = day.getUTCFullYear();
+    var first = new Date(Date.UTC(year, 0, 1));
+    var week = Math.ceil(((day - first) / 86400000 + 1) / 7);
+    return 'Settimana ' + String(week).padStart(2, '0') + ' · ' + year;
   }
   function printCss() {
     return "\n      *{box-sizing:border-box}\n      body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#eee}\n      .pw-print-toolbar{position:sticky;top:0;z-index:10;background:#111;color:#fff;padding:12px;display:flex;gap:8px;justify-content:center}\n      .pw-print-toolbar button{border:0;border-radius:7px;padding:10px 16px;font-weight:700;cursor:pointer}\n      .pw-print-toolbar .main{background:#c7a044;color:#111}\n      .sheet{width:210mm;max-width:100%;margin:16px auto;background:#fff;padding:7mm}\n      .header-grid{display:grid;grid-template-columns:28mm 1fr 36mm;border:1px solid #111}\n      .header-grid>div{padding:6px;border-right:1px solid #111;display:flex;align-items:center;justify-content:center;text-align:center;min-height:52px}\n      .header-grid>div:last-child{border-right:0}\n      .header-grid .rev{font-size:12px}\n      .logo{max-width:90px;max-height:45px;object-fit:contain}\n      .title{font-size:18px;font-weight:700}\n      .meta{display:grid;grid-template-columns:28mm 1fr 36mm 36mm;border-left:1px solid #111;border-right:1px solid #111;border-bottom:1px solid #111}\n      .meta .cell{padding:7px;border-right:1px solid #111;min-height:48px}\n      .meta .cell:last-child{border-right:0}\n      .meta label,.resultbox label{display:block;font-weight:700;font-size:11px;margin-bottom:3px}\n      .pw-archive-value{display:block;min-height:22px;padding:4px 2px;font-size:12px}\n      table{width:100%;border-collapse:collapse;margin-top:9px;font-size:10px;table-layout:fixed}\n      th,td{border:1px solid #222;padding:5px;vertical-align:top;overflow-wrap:anywhere}\n      th:nth-child(1){width:17%} th:nth-child(2){width:48%} th:nth-child(3){width:13%} th:nth-child(4){width:22%}\n      .phase{font-weight:700}\n      .resultbox{display:grid;gap:5px}\n      .inlinechecks{display:flex;gap:7px;align-items:center}\n      .choice{display:inline-flex;gap:3px;align-items:center}\n      .pw-associated-operator{margin:4px 0}\n      .pw-operator-name{font-weight:700;border:1px solid #aaa;padding:4px}\n      .signature-preview{width:100%;height:52px;border:1px solid #aaa;display:flex;align-items:center;justify-content:center;overflow:hidden}\n      .signature-image{display:block;max-width:100%;max-height:100%;object-fit:contain}\n      .extra{margin-top:10px;border:1px solid #222}\n      .extra-row{display:grid;grid-template-columns:52mm 1fr;border-bottom:1px solid #222}\n      .extra-row:last-child{border-bottom:0}.extra-row>div{padding:6px}.extra-row .lbl{font-weight:700;border-right:1px solid #222}\n      @page{size:A4 portrait;margin:7mm}\n      @media print{\n        body{background:#fff}\n        .pw-print-toolbar{display:none!important}\n        .sheet{width:100%;margin:0;padding:0}\n        tr{break-inside:avoid;page-break-inside:avoid}\n      }\n    ";
@@ -325,6 +360,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         formType,
         data,
         items,
+        lastWeek,
         _args4 = arguments,
         _t5;
       return _regenerator().w(function (_context4) {
@@ -362,7 +398,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             return _context4.a(2);
           case 4:
             list.innerHTML = '';
+            lastWeek = '';
             items.forEach(function (item) {
+              var week = archiveWeek(item.completed_at);
+              if (week !== lastWeek) {
+                lastWeek = week;
+                var title = document.createElement('div');
+                title.className = 'pw-archive-week-title';
+                title.textContent = week;
+                title.style.cssText = 'font-weight:700;margin:14px 0 6px;padding:7px 10px;background:#f4f0e7;border-left:3px solid #c7a044;border-radius:3px';
+                list.appendChild(title);
+              }
               var row = document.createElement('div');
               row.className = 'pw-archive-row';
               row.innerHTML = "\n          <div><div class=\"pw-archive-commessa\">Commessa ".concat(esc(item.commessa), "</div></div>\n          <div class=\"pw-archive-type\">").concat(esc(formatType(item.form_type)), "</div>\n          <div class=\"pw-archive-date\">").concat(esc(formatDate(item.completed_at)), "</div>\n          <button type=\"button\" class=\"pw-archive-open\">Apri / Esporta PDF</button>");
