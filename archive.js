@@ -265,7 +265,7 @@
 
   function readyToArchive() {
     const rows = [...document.querySelectorAll('#formArea tbody tr')];
-    if (!rows.length) return false;
+    if (!rows.length) { alert('Nessuna fase di collaudo disponibile. Seleziona prima la tipologia e ricarica la scheda.'); return false; }
     const missing = rows.findIndex((row,index) =>
       !row.querySelector('input[data-group="esito_' + index + '"]:checked'));
     if (missing >= 0) {
@@ -540,6 +540,9 @@
     overlay.hidden = false;
     await loadArchiveList(overlay);
   }
+
+  // Espone un unico punto di apertura anche ai componenti dell'area Ufficio.
+  window.PWOpenCollaudoArchive = openArchive;
 
   function installButtons() {
     const topbar = document.querySelector('.topbar');
