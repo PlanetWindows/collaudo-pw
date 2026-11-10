@@ -32,18 +32,45 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     location.replace(location.pathname + '?access=' + Date.now());
   }
   function closeArchive() {
-    var _document$querySelect;
-    (_document$querySelect = document.querySelector('.pw-archive-overlay')) === null || _document$querySelect === void 0 || _document$querySelect.remove();
+    var overlay = document.querySelector('.pw-archive-overlay');
+    if (overlay) overlay.hidden = true;
   }
   function installTopSwitch() {
     var topbar = document.querySelector('.topbar');
-    if (!topbar || topbar.querySelector('.pw-office-top-switch')) return;
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pw-office-top-switch';
-    b.textContent = 'Cambia accesso';
-    b.addEventListener('click', changeAccess);
-    topbar.appendChild(b);
+    if (!topbar) return;
+    var archive = topbar.querySelector('.pw-archive-btn');
+    if (!archive) {
+      archive = document.createElement('button');
+      archive.type = 'button';
+      archive.className = 'pw-archive-btn';
+      var status = topbar.querySelector('.status');
+      if (status) topbar.insertBefore(archive, status);else topbar.appendChild(archive);
+    }
+    if (archive.dataset.pwOfficeArchiveFix !== '1') {
+      var fixed = archive.cloneNode(true);
+      archive.replaceWith(fixed);
+      archive = fixed;
+      archive.dataset.pwOfficeArchiveFix = '1';
+      archive.textContent = 'Archivio ufficio';
+      archive.addEventListener('click', function () {
+        if (typeof window.PWOpenCollaudoArchive !== 'function') {
+          alert('Archivio non disponibile. Ricarica la pagina e riprova.');
+          return;
+        }
+        Promise.resolve(window.PWOpenCollaudoArchive()).catch(function (err) {
+          console.error('Apertura Archivio Ufficio', err);
+          alert('Impossibile aprire l’archivio. Riprova.');
+        });
+      });
+    }
+    if (!topbar.querySelector('.pw-office-top-switch')) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pw-office-top-switch';
+      b.textContent = 'Cambia accesso';
+      b.addEventListener('click', changeAccess);
+      topbar.appendChild(b);
+    }
   }
   function installArchiveHeader() {
     var _head$querySelector;
