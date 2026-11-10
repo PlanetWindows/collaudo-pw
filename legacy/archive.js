@@ -118,7 +118,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     var sheet = document.querySelector('.sheet');
     if (!sheet) return '';
     var clone = sheet.cloneNode(true);
-    clone.querySelectorAll('.pw-date-manual,.pw-date-hint').forEach(function (el) {
+    clone.querySelectorAll('.pw-date-native,.pw-date-picker').forEach(function (el) {
       return el.remove();
     });
     clone.querySelectorAll('.notice,.footer-actions,.hint,.signature-actions,.pw-change-operator,.pw-operator-select,.pw-signature-plus-proxy').forEach(function (el) {
