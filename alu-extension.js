@@ -122,7 +122,7 @@
     document.querySelectorAll('#formArea tbody tr').forEach((row, index) => {
       const resultBox = row.querySelector('.resultbox');
       if (!resultBox) return;
-      if (resultBox.querySelector('.pw-alu-operator-block')) return;
+      if (resultBox.querySelector('.pw-alu-operator-block, .pw-associated-operator')) return;
 
       const signatureLabel = Array.from(resultBox.querySelectorAll('label'))
         .find(label => (label.textContent || '').trim().toLowerCase() === 'firma operatore');
