@@ -158,7 +158,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     });
   }
   function ensureOperatorBlock(row, index) {
-    var _DEFAULTS$type, _oldData$fields;
+    var _DEFAULTS$type, _oldData$fields, _oldData$fields2;
     var type = formType();
     var fallback = ((_DEFAULTS$type = DEFAULTS[type]) === null || _DEFAULTS$type === void 0 ? void 0 : _DEFAULTS$type[index]) || '';
     var resultBox = row.querySelector('.resultbox');
@@ -181,7 +181,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
     }();
     var savedName = String(((_oldData$fields = oldData.fields) === null || _oldData$fields === void 0 ? void 0 : _oldData$fields['phase_operator_' + index]) || '').trim();
-    var name = savedName && (Object.values(DEFAULTS).some(function (names) {
+    var oldCommessa = String(((_oldData$fields2 = oldData.fields) === null || _oldData$fields2 === void 0 ? void 0 : _oldData$fields2.commessa) || '').trim().toUpperCase();
+    var sameCommessa = !oldCommessa || !commessa() || oldCommessa === commessa().toUpperCase();
+    var name = sameCommessa && savedName && (Object.values(DEFAULTS).some(function (names) {
       return names.includes(savedName);
     }) || savedName === 'APOLLO FRANCESCO') ? savedName : fallback;
     block = document.createElement('div');
@@ -252,8 +254,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     var pvcSelect = row.querySelector('.pw-operator-select');
     var select = aluSelect || pvcSelect;
     var name = row.querySelector('.pw-operator-name');
-    var outcome = row.querySelector('input[data-group="esito_' + index + '"]:checked');
-    var storedBlankApollo = type === 'pvc' && index === 3 && current === 'APOLLO FRANCESCO' && !marker.value && !outcome;
+    var storedBlankApollo = type === 'pvc' && index === 3 && current === 'APOLLO FRANCESCO' && !marker.value;
     if ((!current || storedBlankApollo) && !marker.value) {
       hidden.value = expected;
       if (select) select.value = expected;
