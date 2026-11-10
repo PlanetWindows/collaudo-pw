@@ -48,10 +48,6 @@
   }
 
   function ensureRow(row, index) {
-    if (isEscapeType()) {
-      row.querySelector('.pw-nc-position-wrap')?.remove();
-      return;
-    }
 
     const nc = row.querySelector(`input[data-group="esito_${index}"][data-value="NC"]`);
     if (!nc) return;
@@ -89,7 +85,6 @@
   }
 
   function firstMissingPosition() {
-    if (isEscapeType()) return null;
     const rows = document.querySelectorAll('#formArea tbody tr');
     for (let index = 0; index < rows.length; index++) {
       const row = rows[index];
