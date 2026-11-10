@@ -1,15 +1,15 @@
 function _regenerator() { var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
 (function (_document$getElementB2) {
@@ -25,7 +25,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     alu_vie_fuga: ['GHIDONI PIERLUIGI', 'GHIDONI PIERLUIGI', 'JHINAOUI RIADH', 'FURLANI ROBERTO', 'FURLANI ROBERTO', 'GOZZI ANDREA', 'GOZZI ANDREA']
   };
   var style = document.createElement('style');
-  style.textContent = "\n    .signature-actions,.pw-signature-plus-proxy,.pw-use-official-signature,.pw-alu-signature-plus{display:none!important}\n    .pw-alu-operator-block .pw-operator-row{display:flex;gap:6px;align-items:center;margin:3px 0}\n    .pw-alu-operator-block .pw-operator-name{flex:1;padding:7px;border:1px solid #bbb;border-radius:5px;font-size:12px;font-weight:600}\n    .pw-alu-operator-block .pw-change-operator{border:1px solid #bbb;border-radius:5px;background:#fff;padding:6px;cursor:pointer}\n    .pw-alu-operator-block .pw-alu-operator-select{display:none}\n    .inlinechecks{flex-wrap:wrap}\n    @media print{\n      .pw-alu-operator-block .pw-change-operator,.pw-alu-operator-block .pw-alu-operator-select{display:none!important}\n      .pw-alu-operator-block .pw-operator-name{border:0;padding:0}\n      .pw-manual-pdf-btn{display:none!important}\n    }";
+  style.textContent = "\n    .signature-actions,.pw-signature-plus-proxy,.pw-use-official-signature,.pw-alu-signature-plus{display:none!important}\n    .pw-alu-operator-block .pw-operator-row{display:flex;gap:6px;align-items:center;margin:3px 0}\n    .pw-alu-operator-block .pw-operator-name{flex:1;padding:7px;border:1px solid #bbb;border-radius:5px;font-size:12px;font-weight:600}\n    .pw-alu-operator-block .pw-change-operator{border:1px solid #bbb;border-radius:5px;background:#fff;padding:6px;cursor:pointer}\n    .pw-alu-operator-block .pw-alu-operator-select{display:none}\n    .inlinechecks{flex-wrap:wrap}\n    .pw-associated-operator,.pw-alu-operator-block{display:block!important;margin:7px 0 8px!important}\n    .pw-associated-operator .pw-operator-row,.pw-alu-operator-block .pw-operator-row{display:flex!important;gap:5px;align-items:center;flex-wrap:wrap}\n    .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Poppins,Arial,sans-serif!important;font-size:11px!important;font-style:normal!important;text-transform:uppercase!important;font-weight:700!important;letter-spacing:.1px;overflow-wrap:anywhere}\n    .pw-associated-operator>label,.pw-alu-operator-block>label{font-weight:700!important;font-size:11px!important}\n    @media print{.pw-associated-operator .pw-change-operator,.pw-associated-operator .pw-operator-select,.pw-alu-operator-block .pw-change-operator{display:none!important}\n      .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Arial,sans-serif!important;border:0!important;padding:0!important}}\n    @media print{\n      .pw-alu-operator-block .pw-change-operator,.pw-alu-operator-block .pw-alu-operator-select{display:none!important}\n      .pw-alu-operator-block .pw-operator-name{border:0;padding:0}\n      .pw-manual-pdf-btn{display:none!important}\n    }";
   document.head.appendChild(style);
   var signatures = {};
   var signaturesLoading = false;
@@ -157,11 +157,92 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       persist(marker);
     });
   }
-  function updateOperator(row, index) {
-    var _DEFAULTS$type;
+  function ensureOperatorBlock(row, index) {
+    var _DEFAULTS$type, _oldData$fields;
     var type = formType();
-    var expected = (_DEFAULTS$type = DEFAULTS[type]) === null || _DEFAULTS$type === void 0 ? void 0 : _DEFAULTS$type[index];
+    var fallback = ((_DEFAULTS$type = DEFAULTS[type]) === null || _DEFAULTS$type === void 0 ? void 0 : _DEFAULTS$type[index]) || '';
+    var resultBox = row.querySelector('.resultbox');
+    if (!resultBox || !fallback) return;
+    var block = resultBox.querySelector('.pw-associated-operator, .pw-alu-operator-block');
+    if (block) {
+      decorateAlu(row, index);
+      return;
+    }
+    var signatureWrap = resultBox.querySelector('.signature-wrap');
+    if (!signatureWrap) return;
+    var signatureLabel = Array.from(resultBox.querySelectorAll('label')).find(function (label) {
+      return /^firma operatore/i.test((label.textContent || '').trim());
+    });
+    var oldData = function () {
+      try {
+        return JSON.parse(localStorage.getItem('pw-collaudo-' + type) || '{}');
+      } catch (_) {
+        return {};
+      }
+    }();
+    var savedName = String(((_oldData$fields = oldData.fields) === null || _oldData$fields === void 0 ? void 0 : _oldData$fields['phase_operator_' + index]) || '').trim();
+    var name = savedName && (Object.values(DEFAULTS).some(function (names) {
+      return names.includes(savedName);
+    }) || savedName === 'APOLLO FRANCESCO') ? savedName : fallback;
+    block = document.createElement('div');
+    block.className = 'pw-associated-operator';
+    block.dataset.operatorIndex = String(index);
+    block.dataset.defaultOperator = fallback;
+    var label = document.createElement('label');
+    label.textContent = 'Nome e cognome';
+    var nameRow = document.createElement('div');
+    nameRow.className = 'pw-operator-row';
+    var printed = document.createElement('div');
+    printed.className = 'pw-operator-name';
+    printed.textContent = name.toUpperCase();
+    var change = document.createElement('button');
+    change.type = 'button';
+    change.className = 'pw-change-operator';
+    change.textContent = 'Cambia operatore';
+    nameRow.append(printed, change);
+    var select = document.createElement('select');
+    select.className = 'pw-operator-select';
+    select.hidden = true;
+    select.setAttribute('aria-label', 'Sostituisci operatore assente');
+    var names = _toConsumableArray(new Set(Object.values(DEFAULTS).flat().concat(['APOLLO FRANCESCO'])));
+    names.forEach(function (operator) {
+      var option = document.createElement('option');
+      option.value = operator;
+      option.textContent = operator;
+      select.appendChild(option);
+    });
+    select.value = name;
+    var hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.dataset.field = 'phase_operator_' + index;
+    hidden.value = name;
+    block.append(label, nameRow, select, hidden);
+    resultBox.insertBefore(block, signatureLabel || signatureWrap);
+    change.addEventListener('click', function () {
+      select.hidden = !select.hidden;
+      if (!select.hidden) select.focus();
+    });
+    select.addEventListener('change', function () {
+      var chosen = select.value || fallback;
+      hidden.value = chosen;
+      printed.textContent = chosen.toUpperCase();
+      select.hidden = true;
+      var marker = ensureManualFlag(row, index);
+      marker.value = '1';
+      if (typeof setSignatureImage === 'function') {
+        setSignatureImage('phase_sign_' + index, '');
+      }
+      persist(hidden);
+      persist(marker);
+      setTimeout(refresh, 100);
+    });
+  }
+  function updateOperator(row, index) {
+    var _DEFAULTS$type2;
+    var type = formType();
+    var expected = (_DEFAULTS$type2 = DEFAULTS[type]) === null || _DEFAULTS$type2 === void 0 ? void 0 : _DEFAULTS$type2[index];
     if (!expected) return;
+    ensureOperatorBlock(row, index);
     decorateAlu(row, index);
     var hidden = row.querySelector('input[data-field="phase_operator_' + index + '"]');
     if (!hidden) return;
@@ -187,9 +268,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     }
   }
   function refreshSignature(row, index) {
-    var _row$querySelector2, _window$PWCollaudoSyn2;
-    if (!commessa()) return;
-    if (Date.now() - commessaChangedAt < 1700) return;
+    var _row$querySelector2;
+    if (commessa() && Date.now() - commessaChangedAt < 1300) return;
     var operator = String(((_row$querySelector2 = row.querySelector('input[data-field="phase_operator_' + index + '"]')) === null || _row$querySelector2 === void 0 ? void 0 : _row$querySelector2.value) || '').trim();
     if (!operator) return;
     var official = signatures[operator] || (operator === 'APOLLO FRANCESCO' ? 'apollo-francesco-signature.svg?v=1' : '');
@@ -206,10 +286,13 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       });
       if (!officialOfOther && !(existing.includes('apollo-francesco-signature.svg') && operator !== 'APOLLO FRANCESCO')) return;
     }
-    if (existing === official) return;
+    if (existing === official && img.dataset.hasSignature === '1') return;
     setSignatureImage('phase_sign_' + index, official);
-    if (typeof autoSave === 'function') autoSave();
-    if ((_window$PWCollaudoSyn2 = window.PWCollaudoSync) !== null && _window$PWCollaudoSyn2 !== void 0 && _window$PWCollaudoSyn2.queueSave) window.PWCollaudoSync.queueSave(400);
+    if (commessa()) {
+      var _window$PWCollaudoSyn2;
+      if (typeof autoSave === 'function') autoSave();
+      if ((_window$PWCollaudoSyn2 = window.PWCollaudoSync) !== null && _window$PWCollaudoSyn2 !== void 0 && _window$PWCollaudoSyn2.queueSave) window.PWCollaudoSync.queueSave(400);
+    }
   }
   function refresh() {
     var type = formType();
@@ -227,7 +310,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       refreshSignature(row, i);
       var label = (_row$querySelector3 = row.querySelector('.signature-wrap')) === null || _row$querySelector3 === void 0 ? void 0 : _row$querySelector3.previousElementSibling;
       if ((label === null || label === void 0 ? void 0 : label.tagName) === 'LABEL' && String(label.textContent || '').includes('Firma')) {
-        label.textContent = 'Firma operatore associata';
+        label.textContent = 'Firma operatore';
       }
       row.querySelectorAll('.inlinechecks .choice').forEach(function (choice) {
         var input = choice.querySelector('input[data-value]');
