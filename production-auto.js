@@ -205,16 +205,7 @@
         setTimeout(refresh, 220);
       }
     }
-    if (el instanceof HTMLInputElement && el.matches('input[data-group][data-value]') && el.checked) {
-      const row = el.closest('tr');
-      const index = Array.from(document.querySelectorAll('#formArea tbody tr')).indexOf(row);
-      const date = row?.querySelector('input[data-field="phase_date_' + index + '"]');
-      if (date && !date.value) {
-        const now = new Date();
-        date.value = [now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
-        persist(date);
-      }
-    }
+
   }, true);
 
   function addManualPdfButton() {
