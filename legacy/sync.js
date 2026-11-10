@@ -241,7 +241,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       var existing = resultBox.querySelector('.pw-associated-operator');
       if (existing) return;
       var signatureLabel = Array.from(resultBox.querySelectorAll('label')).find(function (label) {
-        return (label.textContent || '').trim().toLowerCase() .indexOf('firma operatore') === 0;
+        return (label.textContent || '').trim().toLowerCase().startsWith('firma operatore');
       });
       if (!signatureLabel) return;
       var fieldName = "phase_operator_".concat(index);
