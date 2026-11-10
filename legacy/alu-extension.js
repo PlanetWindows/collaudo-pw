@@ -142,7 +142,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     document.querySelectorAll('#formArea tbody tr').forEach(function (row, index) {
       var resultBox = row.querySelector('.resultbox');
       if (!resultBox) return;
-      if (resultBox.querySelector('.pw-alu-operator-block')) return;
+      if (resultBox.querySelector('.pw-alu-operator-block, .pw-associated-operator')) return;
       var signatureLabel = Array.from(resultBox.querySelectorAll('label')).find(function (label) {
         return (label.textContent || '').trim().toLowerCase() === 'firma operatore';
       });
