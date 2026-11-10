@@ -217,7 +217,7 @@
 
     const clone = sheet.cloneNode(true);
     // Il campo di digitazione e' un supporto UI: il valore ISO del campo data resta quello ufficiale.
-    clone.querySelectorAll('.pw-date-manual,.pw-date-hint').forEach(el => el.remove());
+    clone.querySelectorAll('.pw-date-native,.pw-date-picker').forEach(el => el.remove());
     clone.querySelectorAll('.notice,.footer-actions,.hint,.signature-actions,.pw-change-operator,.pw-operator-select,.pw-signature-plus-proxy').forEach(el => el.remove());
     clone.querySelectorAll('input[type="file"],input[type="hidden"]').forEach(el => el.remove());
 
