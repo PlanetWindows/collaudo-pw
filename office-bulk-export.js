@@ -14,11 +14,12 @@
   const types = {
     pvc: 'PVC', pvc_speciali: 'PVC - Pezzi speciali',
     pvc_vie_fuga: 'PVC - Vie di fuga', alu: 'Alluminio',
-    alu_speciali: 'alu_speciali', alu_vie_fuga: 'Alluminio - Vie di fuga'
+    alu_speciali: 'Alluminio - Pezzi speciali', alu_vie_fuga: 'Alluminio - Vie di fuga'
   };
 
   const style = document.createElement('style');
   style.textContent = [
+    '.pw-archive-panel{overflow:visible!important}',
     '.pw-office-bulk-wrap{position:relative;z-index:3;display:inline-flex;align-items:center}',
     '.pw-office-bulk-trigger,.pw-office-pdf-direct{border:1px solid #c7a044;background:#c7a044;color:#111;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;white-space:nowrap}',
     '.pw-office-bulk-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:3000;background:#fff;border:1px solid #d7c6a3;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);padding:14px;min-width:290px;max-width:min(94vw,390px);color:#161616;text-align:left}',
