@@ -20,7 +20,7 @@
   zipScript.async = false;
   document.head.appendChild(zipScript);
   var aluExtensionScript = document.createElement('script');
-  aluExtensionScript.src = 'alu-extension.js?v=2';
+  aluExtensionScript.src = 'alu-extension.js?v=3';
   aluExtensionScript.async = false;
   document.head.appendChild(aluExtensionScript);
   var positionScript = document.createElement('script');
