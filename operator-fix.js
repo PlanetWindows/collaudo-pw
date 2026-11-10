@@ -44,49 +44,4 @@
   officePrepProductionScript.async = false;
   document.head.appendChild(officePrepProductionScript);
 
-  const TARGET_TYPE = 'pvc';
-  const TARGET_INDEX = 3;
-  const LEGACY_DEFAULT = 'ANGELO IDONE';
-  const NEW_DEFAULT = 'APOLLO FRANCESCO';
-
-  function isTargetForm() {
-    return (document.getElementById('formType')?.value || '') === TARGET_TYPE;
-  }
-
-  function enforceApolloDefault() {
-    if (!isTargetForm()) return;
-
-    const rows = document.querySelectorAll('#formArea tbody tr');
-    const row = rows[TARGET_INDEX];
-    if (!row) return;
-
-    const block = row.querySelector('.pw-associated-operator');
-    if (!block) return;
-
-    const hiddenInput = block.querySelector(`input[data-field="phase_operator_${TARGET_INDEX}"]`);
-    const nameEl = block.querySelector('.pw-operator-name');
-    const select = block.querySelector('.pw-operator-select');
-    if (!hiddenInput || !nameEl || !select) return;
-
-    if (!Array.from(select.options).some(option => option.value === NEW_DEFAULT)) {
-      const option = document.createElement('option');
-      option.value = NEW_DEFAULT;
-      option.textContent = NEW_DEFAULT;
-      select.appendChild(option);
-    }
-
-    const current = String(hiddenInput.value || '').trim();
-    if (!current || current === LEGACY_DEFAULT) {
-      hiddenInput.value = NEW_DEFAULT;
-      nameEl.textContent = NEW_DEFAULT;
-      select.value = NEW_DEFAULT;
-      hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-      if (typeof autoSave === 'function') autoSave();
-      if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(100);
-    }
-  }
-
-  document.getElementById('formType')?.addEventListener('change', () => setTimeout(enforceApolloDefault, 60));
-  setTimeout(enforceApolloDefault, 0);
-  setInterval(enforceApolloDefault, 500);
 })();
