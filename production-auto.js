@@ -22,6 +22,12 @@
     .pw-alu-operator-block .pw-change-operator{border:1px solid #bbb;border-radius:5px;background:#fff;padding:6px;cursor:pointer}
     .pw-alu-operator-block .pw-alu-operator-select{display:none}
     .inlinechecks{flex-wrap:wrap}
+    .pw-associated-operator,.pw-alu-operator-block{display:block!important;margin:7px 0 8px!important}
+    .pw-associated-operator .pw-operator-row,.pw-alu-operator-block .pw-operator-row{display:flex!important;gap:5px;align-items:center;flex-wrap:wrap}
+    .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Poppins,Arial,sans-serif!important;font-size:11px!important;font-style:normal!important;text-transform:uppercase!important;font-weight:700!important;letter-spacing:.1px;overflow-wrap:anywhere}
+    .pw-associated-operator>label,.pw-alu-operator-block>label{font-weight:700!important;font-size:11px!important}
+    @media print{.pw-associated-operator .pw-change-operator,.pw-associated-operator .pw-operator-select,.pw-alu-operator-block .pw-change-operator{display:none!important}
+      .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Arial,sans-serif!important;border:0!important;padding:0!important}}
     @media print{
       .pw-alu-operator-block .pw-change-operator,.pw-alu-operator-block .pw-alu-operator-select{display:none!important}
       .pw-alu-operator-block .pw-operator-name{border:0;padding:0}
@@ -107,10 +113,91 @@
     });
   }
 
+  function ensureOperatorBlock(row, index) {
+    const type = formType();
+    const fallback = DEFAULTS[type]?.[index] || '';
+    const resultBox = row.querySelector('.resultbox');
+    if (!resultBox || !fallback) return;
+
+    let block = resultBox.querySelector('.pw-associated-operator, .pw-alu-operator-block');
+    if (block) {
+      // La vecchia versione puo' avere solo una select, senza nome stampato.
+      decorateAlu(row, index);
+      return;
+    }
+
+    const signatureWrap = resultBox.querySelector('.signature-wrap');
+    if (!signatureWrap) return;
+    const signatureLabel = Array.from(resultBox.querySelectorAll('label'))
+      .find(label => /^firma operatore/i.test((label.textContent || '').trim()));
+    const oldData = (() => {
+      try { return JSON.parse(localStorage.getItem('pw-collaudo-' + type) || '{}'); }
+      catch (_) { return {}; }
+    })();
+    const savedName = String(oldData.fields?.['phase_operator_' + index] || '').trim();
+    const name = savedName && (Object.values(DEFAULTS).some(names => names.includes(savedName)) || savedName === 'APOLLO FRANCESCO')
+      ? savedName : fallback;
+
+    block = document.createElement('div');
+    block.className = 'pw-associated-operator';
+    block.dataset.operatorIndex = String(index);
+    block.dataset.defaultOperator = fallback;
+    const label = document.createElement('label');
+    label.textContent = 'Nome e cognome';
+    const nameRow = document.createElement('div');
+    nameRow.className = 'pw-operator-row';
+    const printed = document.createElement('div');
+    printed.className = 'pw-operator-name';
+    printed.textContent = name.toUpperCase();
+    const change = document.createElement('button');
+    change.type = 'button';
+    change.className = 'pw-change-operator';
+    change.textContent = 'Cambia operatore';
+    nameRow.append(printed, change);
+    const select = document.createElement('select');
+    select.className = 'pw-operator-select';
+    select.hidden = true;
+    select.setAttribute('aria-label', 'Sostituisci operatore assente');
+    const names = [...new Set(Object.values(DEFAULTS).flat().concat(['APOLLO FRANCESCO']))];
+    names.forEach(operator => {
+      const option = document.createElement('option');
+      option.value = operator;
+      option.textContent = operator;
+      select.appendChild(option);
+    });
+    select.value = name;
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.dataset.field = 'phase_operator_' + index;
+    hidden.value = name;
+    block.append(label, nameRow, select, hidden);
+    resultBox.insertBefore(block, signatureLabel || signatureWrap);
+
+    change.addEventListener('click', () => {
+      select.hidden = !select.hidden;
+      if (!select.hidden) select.focus();
+    });
+    select.addEventListener('change', () => {
+      const chosen = select.value || fallback;
+      hidden.value = chosen;
+      printed.textContent = chosen.toUpperCase();
+      select.hidden = true;
+      const marker = ensureManualFlag(row, index);
+      marker.value = '1';
+      if (typeof setSignatureImage === 'function') {
+        setSignatureImage('phase_sign_' + index, '');
+      }
+      persist(hidden);
+      persist(marker);
+      setTimeout(refresh, 100);
+    });
+  }
+
   function updateOperator(row, index) {
     const type = formType();
     const expected = DEFAULTS[type]?.[index];
     if (!expected) return;
+    ensureOperatorBlock(row, index);
     decorateAlu(row, index);
 
     const hidden = row.querySelector('input[data-field="phase_operator_' + index + '"]');
@@ -140,9 +227,9 @@
   }
 
   function refreshSignature(row, index) {
-    if (!commessa()) return;
-    // Prima si lascia caricare la commessa condivisa; non si sovrascrivono le firme custom.
-    if (Date.now() - commessaChangedAt < 1700) return;
+    // Le firme ufficiali devono comparire anche prima di inserire la commessa.
+    // A commessa caricata la sincronizzazione mantiene i dati esistenti.
+    if (commessa() && Date.now() - commessaChangedAt < 1300) return;
     const operator = String(row.querySelector('input[data-field="phase_operator_' + index + '"]')?.value || '').trim();
     if (!operator) return;
     const official = signatures[operator] ||
@@ -156,10 +243,13 @@
       const officialOfOther = Object.entries(signatures).some(([name, value]) => name !== operator && value === existing);
       if (!officialOfOther && !(existing.includes('apollo-francesco-signature.svg') && operator !== 'APOLLO FRANCESCO')) return;
     }
-    if (existing === official) return;
+    if (existing === official && img.dataset.hasSignature === '1') return;
     setSignatureImage('phase_sign_' + index, official);
-    if (typeof autoSave === 'function') autoSave();
-    if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(400);
+    // Le firme visualizzate a schermata vuota si salvano solo quando esiste una commessa.
+    if (commessa()) {
+      if (typeof autoSave === 'function') autoSave();
+      if (window.PWCollaudoSync?.queueSave) window.PWCollaudoSync.queueSave(400);
+    }
   }
 
   function refresh() {
@@ -177,7 +267,7 @@
       refreshSignature(row, i);
       const label = row.querySelector('.signature-wrap')?.previousElementSibling;
       if (label?.tagName === 'LABEL' && String(label.textContent || '').includes('Firma')) {
-        label.textContent = 'Firma operatore associata';
+        label.textContent = 'Firma operatore';
       }
       row.querySelectorAll('.inlinechecks .choice').forEach(choice => {
         const input = choice.querySelector('input[data-value]');
