@@ -135,7 +135,9 @@
       catch (_) { return {}; }
     })();
     const savedName = String(oldData.fields?.['phase_operator_' + index] || '').trim();
-    const name = savedName && (Object.values(DEFAULTS).some(names => names.includes(savedName)) || savedName === 'APOLLO FRANCESCO')
+    const oldCommessa = String(oldData.fields?.commessa || '').trim().toUpperCase();
+    const sameCommessa = !oldCommessa || !commessa() || oldCommessa === commessa().toUpperCase();
+    const name = sameCommessa && savedName && (Object.values(DEFAULTS).some(names => names.includes(savedName)) || savedName === 'APOLLO FRANCESCO')
       ? savedName : fallback;
 
     block = document.createElement('div');
@@ -208,9 +210,8 @@
     const pvcSelect = row.querySelector('.pw-operator-select');
     const select = aluSelect || pvcSelect;
     const name = row.querySelector('.pw-operator-name');
-    const outcome = row.querySelector('input[data-group="esito_' + index + '"]:checked');
     const storedBlankApollo = type === 'pvc' && index === 3 && current === 'APOLLO FRANCESCO'
-      && !marker.value && !outcome;
+      && !marker.value;
     if ((!current || storedBlankApollo) && !marker.value) {
       hidden.value = expected;
       if (select) select.value = expected;
