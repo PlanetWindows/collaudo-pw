@@ -19,7 +19,7 @@
 
   const style = document.createElement('style');
   style.textContent = [
-    '.pw-office-bulk-wrap{position:relative;display:inline-flex;align-items:center}',
+    '.pw-office-bulk-wrap{position:relative;z-index:3;display:inline-flex;align-items:center}',
     '.pw-office-bulk-trigger,.pw-office-pdf-direct{border:1px solid #c7a044;background:#c7a044;color:#111;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;white-space:nowrap}',
     '.pw-office-bulk-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:3000;background:#fff;border:1px solid #d7c6a3;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);padding:14px;min-width:290px;max-width:min(94vw,390px);color:#161616;text-align:left}',
     '.pw-office-bulk-menu[hidden]{display:none!important}',
@@ -33,9 +33,11 @@
     '.pw-office-select-label{display:flex;gap:8px;align-items:center;min-width:0}',
     '.pw-office-select{width:17px;height:17px;flex:none;accent-color:#b28b39;cursor:pointer}',
     '.pw-office-select-all{display:flex;gap:7px;align-items:center;font-size:13px;font-weight:600;margin:0 4px 0 0}',
+    '.pw-archive-tools{grid-template-columns:minmax(200px,1fr) minmax(180px,240px) auto!important}',
+    '.pw-archive-tools .pw-office-select-all input{width:17px!important;height:17px!important;min-height:0!important;padding:0!important;flex:none}',
     '.pw-archive-row{grid-template-columns:minmax(135px,1fr) minmax(100px,.65fr) minmax(125px,.8fr) auto auto auto auto!important}',
     '.pw-office-pdf-direct{background:#fff!important;padding:9px 11px!important}',
-    '@media(max-width:800px){.pw-archive-row{grid-template-columns:1fr!important}.pw-office-pdf-direct{width:100%!important;min-height:42px!important;margin-top:4px}.pw-office-bulk-menu{right:-90px;min-width:275px}.pw-office-select-all{padding:6px}}'
+    '@media(max-width:800px){.pw-archive-tools{grid-template-columns:1fr!important}.pw-archive-row{grid-template-columns:1fr!important}.pw-office-pdf-direct{width:100%!important;min-height:42px!important;margin-top:4px}.pw-office-bulk-menu{right:-90px;min-width:275px}.pw-office-select-all{padding:6px}}'
   ].join('\n');
   document.head.appendChild(style);
 
@@ -442,7 +444,8 @@
     installHeader();
     installRows();
     const n=overlay.querySelectorAll('.pw-archive-row').length;
-    if (n!==lastRows) { lastRows=n;updateSelection(); }
+    if (n!==lastRows) lastRows=n;
+    updateSelection();
   }
   const observer=new MutationObserver(install);
   observer.observe(document.body,{childList:true,subtree:true});
