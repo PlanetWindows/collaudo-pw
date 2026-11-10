@@ -1,6 +1,8 @@
 (function () {
   'use strict';
   if (String(localStorage.getItem('pw-collaudo-role') || '') !== 'production') return;
+  // Internet Explorer utilizza il calendario dedicato gia' presente in ie11-fixes.js.
+  if (document.documentMode) return;
 
   var style = document.createElement('style');
   style.textContent = [
