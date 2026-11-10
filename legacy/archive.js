@@ -172,7 +172,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   }
   function readyToArchive() {
     var rows = _toConsumableArray(document.querySelectorAll('#formArea tbody tr'));
-    if (!rows.length) return false;
+    if (!rows.length) {
+      alert('Nessuna fase di collaudo disponibile. Seleziona prima la tipologia e ricarica la scheda.');
+      return false;
+    }
     var missing = rows.findIndex(function (row, index) {
       return !row.querySelector('input[data-group="esito_' + index + '"]:checked');
     });
@@ -502,6 +505,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     }));
     return _openArchive.apply(this, arguments);
   }
+  window.PWOpenCollaudoArchive = openArchive;
   function installButtons() {
     var topbar = document.querySelector('.topbar');
     if (topbar && !topbar.querySelector('.pw-archive-btn')) {
