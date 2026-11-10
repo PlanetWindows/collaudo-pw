@@ -24,7 +24,7 @@
     .inlinechecks{flex-wrap:wrap}
     .pw-associated-operator,.pw-alu-operator-block{display:block!important;margin:7px 0 8px!important}
     .pw-associated-operator .pw-operator-row,.pw-alu-operator-block .pw-operator-row{display:flex!important;gap:5px;align-items:center;flex-wrap:wrap}
-    .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Poppins,Arial,sans-serif!important;font-size:11px!important;font-style:normal!important;text-transform:uppercase!important;font-weight:700!important;letter-spacing:.1px;overflow-wrap:anywhere}
+    .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Poppins,Arial,sans-serif!important;font-size:11px!important;font-style:normal!important;text-transform:uppercase!important;font-weight:700!important;letter-spacing:.1px;overflow-wrap:anywhere;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
     .pw-associated-operator>label,.pw-alu-operator-block>label{font-weight:700!important;font-size:11px!important}
     @media print{.pw-associated-operator .pw-change-operator,.pw-associated-operator .pw-operator-select,.pw-alu-operator-block .pw-change-operator{display:none!important}
       .pw-associated-operator .pw-operator-name,.pw-alu-operator-block .pw-operator-name{font-family:Arial,sans-serif!important;border:0!important;padding:0!important}}
@@ -264,6 +264,17 @@
     const rows = document.querySelectorAll('#formArea tbody tr');
     rows.forEach((row, i) => {
       updateOperator(row, i);
+      const operatorBlock = row.querySelector('.pw-associated-operator, .pw-alu-operator-block');
+      if (operatorBlock) {
+        const printedName = operatorBlock.querySelector('.pw-operator-name');
+        if (printedName) {
+          const name = row.querySelector('input[data-field="phase_operator_' + i + '"]');
+          const value = String(name?.value || DEFAULTS[type]?.[i] || '').trim();
+          if (value && printedName.textContent !== value.toUpperCase()) printedName.textContent = value.toUpperCase();
+        }
+        const operatorLabel = operatorBlock.querySelector('label');
+        if (operatorLabel && operatorLabel.textContent !== 'Nome e cognome') operatorLabel.textContent = 'Nome e cognome';
+      }
       refreshSignature(row, i);
       const label = row.querySelector('.signature-wrap')?.previousElementSibling;
       if (label?.tagName === 'LABEL' && String(label.textContent || '').includes('Firma')) {
